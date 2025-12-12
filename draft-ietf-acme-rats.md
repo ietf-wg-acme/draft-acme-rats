@@ -27,8 +27,7 @@ author:
     email: liuchunchi@huawei.com
  -
     fullname: Mike Ounsworth
-    organization: Entrust Limited
-    email: mike.ounsworth@entrust.com
+    email: mike@ounsworth.ca
  -
     fullname: Michael Richardson
     organization: Sandelman Software Works Inc
