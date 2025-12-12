@@ -5,15 +5,15 @@
 Automated Certificate Management Environment                   C. P. Liu
 Internet-Draft                                                    Huawei
 Intended status: Standards Track                            M. Ounsworth
-Expires: 29 March 2026                                   Entrust Limited
+Expires: 15 June 2026                                    Entrust Limited
                                                            M. Richardson
                                             Sandelman Software Works Inc
-                                                       25 September 2025
+                                                        12 December 2025
 
 
 Automated Certificate Management Environment (ACME) rats Identifier and
                              Challenge Type
-                       draft-liu-acme-rats-latest
+                      draft-ietf-acme-rats-latest
 
 Abstract
 
@@ -32,7 +32,7 @@ About This Document
    The latest revision of this draft can be found at
    https://liuchunchi.github.io/draft-liu-acme-rats/draft-liu-acme-
    rats.html.  Status information for this document may be found at
-   https://datatracker.ietf.org/doc/draft-liu-acme-rats/.
+   https://datatracker.ietf.org/doc/draft-ietf-acme-rats/.
 
    Discussion of this document takes place on the Automated Certificate
    Management Environment Working Group mailing list
@@ -58,7 +58,7 @@ Status of This Memo
    time.  It is inappropriate to use Internet-Drafts as reference
    material or to cite them other than as "work in progress."
 
-   This Internet-Draft will expire on 29 March 2026.
+   This Internet-Draft will expire on 15 June 2026.
 
 Copyright Notice
 
@@ -179,7 +179,7 @@ Table of Contents
    This document defines a new identity type, trustworthy that the ACME
    client can ask for.  A new attestation-result-01 challenge is defined
    as a new method that can be used to authorize this identity using a
-   RATS Passport model.  The encrypted-evidence-02 challenge is also
+   RATS Passport model.  The attestation-evidence-02 challenge is also
    defined, enabling a background check mechanism.
 
    In this way, the Certification Authority (CA) or Registration
@@ -698,9 +698,9 @@ Table of Contents
    [I-D.ietf-rats-msg-wrap]
               Birkholz, H., Smith, N., Fossati, T., Tschofenig, H., and
               D. Glaze, "RATS Conceptual Messages Wrapper (CMW)", Work
-              in Progress, Internet-Draft, draft-ietf-rats-msg-wrap-17,
-              12 August 2025, <https://datatracker.ietf.org/doc/html/
-              draft-ietf-rats-msg-wrap-17>.
+              in Progress, Internet-Draft, draft-ietf-rats-msg-wrap-23,
+              11 December 2025, <https://datatracker.ietf.org/doc/html/
+              draft-ietf-rats-msg-wrap-23>.
 
    [I-D.ietf-rats-ar4si]
               Voit, E., Birkholz, H., Hardjono, T., Fossati, T., and V.
@@ -715,9 +715,9 @@ Table of Contents
    [CSRATT]   Ounsworth, M., Tschofenig, H., Birkholz, H., Wiseman, M.,
               and N. Smith, "Use of Remote Attestation with
               Certification Signing Requests", Work in Progress,
-              Internet-Draft, draft-ietf-lamps-csr-attestation-20, 7
-              July 2025, <https://datatracker.ietf.org/doc/html/draft-
-              ietf-lamps-csr-attestation-20>.
+              Internet-Draft, draft-ietf-lamps-csr-attestation-21, 5
+              October 2025, <https://datatracker.ietf.org/doc/html/
+              draft-ietf-lamps-csr-attestation-21>.
 
    [RATSPA]   Moriarty, K., Wiseman, M., Stein, A. J., and C. Nelogal,
               "Remote Posture Assessment for Systems, Containers, and
@@ -730,9 +730,9 @@ Table of Contents
               Wiseman, M., and N. Smith, "PKIX Evidence for Remote
               Attestation of Hardware Security Modules", Work in
               Progress, Internet-Draft, draft-ietf-rats-pkix-key-
-              attestation-01, 7 July 2025,
+              attestation-02, 10 October 2025,
               <https://datatracker.ietf.org/doc/html/draft-ietf-rats-
-              pkix-key-attestation-01>.
+              pkix-key-attestation-02>.
 
    [I-D.draft-bweeks-acme-device-attest-01]
               Weeks, B., "Automated Certificate Management Environment
