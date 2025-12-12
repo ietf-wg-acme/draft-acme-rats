@@ -5,7 +5,7 @@
 Automated Certificate Management Environment                   C. P. Liu
 Internet-Draft                                                    Huawei
 Intended status: Standards Track                            M. Ounsworth
-Expires: 15 June 2026                                    Entrust Limited
+Expires: 15 June 2026                                                   
                                                            M. Richardson
                                             Sandelman Software Works Inc
                                                         12 December 2025
@@ -771,8 +771,7 @@ Authors' Addresses
 
 
    Mike Ounsworth
-   Entrust Limited
-   Email: mike.ounsworth@entrust.com
+   Email: mike@ounsworth.ca
 
 
    Michael Richardson
