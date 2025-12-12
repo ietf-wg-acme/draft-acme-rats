@@ -6,7 +6,7 @@ ipr: trust200902
 lang: en
 title: Automated Certificate Management Environment (ACME) rats Identifier and Challenge Type
 abbrev: acme-rats
-docname: draft-liu-acme-rats-latest
+docname: draft-ietf-acme-rats-latest
 area: "Security"
 workgroup: "Automated Certificate Management Environment"
 kw:
@@ -102,7 +102,7 @@ For instance each of the names: example.com, www.example.com, www.example.net an
 
 This document defines a new identity type, `trustworthy` that the ACME client can ask for.
 A new `attestation-result-01` challenge is defined as a new method that can be used to authorize this identity using a RATS Passport model.
-The `encrypted-evidence-02` challenge is also defined, enabling a background check mechanism.
+The `attestation-evidence-02` challenge is also defined, enabling a background check mechanism.
 
 In this way, the Certification Authority (CA) or Registration Authority (RA) issues certificates only to devices that can provide an appropriate attestation result, indicating that the device from which the ACME request originates has passed the required security checks.
 
