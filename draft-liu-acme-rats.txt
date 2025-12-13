@@ -5,10 +5,10 @@
 Automated Certificate Management Environment                   C. P. Liu
 Internet-Draft                                                    Huawei
 Intended status: Standards Track                            M. Ounsworth
-Expires: 29 March 2026                                   Entrust Limited
+Expires: 16 June 2026                                    Entrust Limited
                                                            M. Richardson
                                             Sandelman Software Works Inc
-                                                       25 September 2025
+                                                        13 December 2025
 
 
 Automated Certificate Management Environment (ACME) rats Identifier and
@@ -58,7 +58,7 @@ Status of This Memo
    time.  It is inappropriate to use Internet-Drafts as reference
    material or to cite them other than as "work in progress."
 
-   This Internet-Draft will expire on 29 March 2026.
+   This Internet-Draft will expire on 16 June 2026.
 
 Copyright Notice
 
@@ -329,8 +329,9 @@ Table of Contents
    relates to the dns identifier, and it is not changed from [RFC8555],
    Section 8.
 
-   The C1uq5Dr+x8GSEJTSKW5B authorization is a new authorization type,
-   trustworthy, it is detailed in Section 3 and Section 4.
+   The C1uq5Dr+x8GSEJTSKW5B authorization is the new authorization type,
+   which is either attestation-result-01 or encrypted-evidence-02.
+   These are detailed in Section 3 and Section 4.
 
    Here is an example:
 
@@ -360,15 +361,19 @@ Table of Contents
 
 2.4.  Step 4: Obtain Attestation Result
 
-   The client now uses the token yoW1RL2zPBzYEHBQ06Jy as a fresh nonce.
-   It produces fresh Evidence, and provides this to the Verifier.
+   The client now uses the (example) token yoW1RL2zPBzYEHBQ06Jy as a
+   fresh nonce.  It produces fresh Evidence, and provides this to the
+   Verifier.
 
    The details of this step are not in scope for this document.  As an
    example, it might use TPM-CHARRA [RFC9684], or X, or Y (XXX: insert
    more options)
 
-   The format result is described in Section 3.2 and Section 4.2.  (An
-   example from [I-D.ietf-rats-ar4si] would be good here)
+   The format result is described in Section 3.2 and Section 4.2.
+   (EDIT: An example from [I-D.ietf-rats-ar4si] would be good here)
+   Assume the following binary blob is the response:
+
+yePAuQj5xXAnz87/7ItOkDTk5Y4syoW1RL2zPBzYEHBQ06JyUvZDYPYjeTqwlPszb9Grbxw0UAEFx5DxObV1
 
    This result is sent as a POST to https://example.com/acme/chall/
    prV_8235AD9d
@@ -643,9 +648,9 @@ Table of Contents
    business relationship with the Verifier in order for the Verifier to
    be willing to appraise Evidence.
 
-   The trustworthy identifier and challenge/response is not an actual
-   identifier.  It does not result in any specific contents to the
-   certificate Subject or SubjectAltName.
+   The trustworthy identifier is not an actual identifier.  It does not
+   result in any specific contents to the certificate Subject or
+   SubjectAltName.
 
 8.  IANA Considerations
 
@@ -698,9 +703,9 @@ Table of Contents
    [I-D.ietf-rats-msg-wrap]
               Birkholz, H., Smith, N., Fossati, T., Tschofenig, H., and
               D. Glaze, "RATS Conceptual Messages Wrapper (CMW)", Work
-              in Progress, Internet-Draft, draft-ietf-rats-msg-wrap-17,
-              12 August 2025, <https://datatracker.ietf.org/doc/html/
-              draft-ietf-rats-msg-wrap-17>.
+              in Progress, Internet-Draft, draft-ietf-rats-msg-wrap-23,
+              11 December 2025, <https://datatracker.ietf.org/doc/html/
+              draft-ietf-rats-msg-wrap-23>.
 
    [I-D.ietf-rats-ar4si]
               Voit, E., Birkholz, H., Hardjono, T., Fossati, T., and V.
@@ -715,9 +720,9 @@ Table of Contents
    [CSRATT]   Ounsworth, M., Tschofenig, H., Birkholz, H., Wiseman, M.,
               and N. Smith, "Use of Remote Attestation with
               Certification Signing Requests", Work in Progress,
-              Internet-Draft, draft-ietf-lamps-csr-attestation-20, 7
-              July 2025, <https://datatracker.ietf.org/doc/html/draft-
-              ietf-lamps-csr-attestation-20>.
+              Internet-Draft, draft-ietf-lamps-csr-attestation-21, 5
+              October 2025, <https://datatracker.ietf.org/doc/html/
+              draft-ietf-lamps-csr-attestation-21>.
 
    [RATSPA]   Moriarty, K., Wiseman, M., Stein, A. J., and C. Nelogal,
               "Remote Posture Assessment for Systems, Containers, and
@@ -730,9 +735,9 @@ Table of Contents
               Wiseman, M., and N. Smith, "PKIX Evidence for Remote
               Attestation of Hardware Security Modules", Work in
               Progress, Internet-Draft, draft-ietf-rats-pkix-key-
-              attestation-01, 7 July 2025,
+              attestation-02, 10 October 2025,
               <https://datatracker.ietf.org/doc/html/draft-ietf-rats-
-              pkix-key-attestation-01>.
+              pkix-key-attestation-02>.
 
    [I-D.draft-bweeks-acme-device-attest-01]
               Weeks, B., "Automated Certificate Management Environment
