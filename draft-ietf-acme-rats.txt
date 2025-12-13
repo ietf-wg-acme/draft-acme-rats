@@ -5,7 +5,7 @@
 Automated Certificate Management Environment                   C. P. Liu
 Internet-Draft                                                    Huawei
 Intended status: Standards Track                            M. Ounsworth
-Expires: 16 June 2026                                    Entrust Limited
+Expires: 16 June 2026                                                   
                                                            M. Richardson
                                             Sandelman Software Works Inc
                                                         13 December 2025
@@ -13,7 +13,7 @@ Expires: 16 June 2026                                    Entrust Limited
 
 Automated Certificate Management Environment (ACME) rats Identifier and
                              Challenge Type
-                       draft-liu-acme-rats-latest
+                      draft-ietf-acme-rats-latest
 
 Abstract
 
@@ -32,7 +32,7 @@ About This Document
    The latest revision of this draft can be found at
    https://liuchunchi.github.io/draft-liu-acme-rats/draft-liu-acme-
    rats.html.  Status information for this document may be found at
-   https://datatracker.ietf.org/doc/draft-liu-acme-rats/.
+   https://datatracker.ietf.org/doc/draft-ietf-acme-rats/.
 
    Discussion of this document takes place on the Automated Certificate
    Management Environment Working Group mailing list
@@ -179,7 +179,7 @@ Table of Contents
    This document defines a new identity type, trustworthy that the ACME
    client can ask for.  A new attestation-result-01 challenge is defined
    as a new method that can be used to authorize this identity using a
-   RATS Passport model.  The encrypted-evidence-02 challenge is also
+   RATS Passport model.  The attestation-evidence-02 challenge is also
    defined, enabling a background check mechanism.
 
    In this way, the Certification Authority (CA) or Registration
@@ -776,8 +776,7 @@ Authors' Addresses
 
 
    Mike Ounsworth
-   Entrust Limited
-   Email: mike.ounsworth@entrust.com
+   Email: mike@ounsworth.ca
 
 
    Michael Richardson
