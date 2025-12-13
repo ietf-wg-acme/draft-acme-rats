@@ -44,7 +44,7 @@ informative:
   I-D.draft-bweeks-acme-device-attest-01: device-attest-01
   letsencrypt:
     target:    https://www.eff.org/deeplinks/2023/08/celebrating-ten-years-encrypting-web-lets-encrypt
-    title: "Celebrating Ten Years of Encrypting the Web with Let’s Encrypt"
+    title: "Celebrating Ten Years of Encrypting the Web with Let's Encrypt"
     author:
       org:
       - "Electronic Frontier Foundation"
