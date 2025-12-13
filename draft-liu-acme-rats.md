@@ -221,7 +221,9 @@ The client accesses each authorization object from the URLs given in the Order O
 In this example, the `PAniVnsZcis` authorization relates to the `dns` identifier, and
 it is not changed from {{RFC8555, Section 8}}.
 
-The `C1uq5Dr+x8GSEJTSKW5B` authorization is a new authorization type, `trustworthy`, it is detailed in {{trustworthyauthorization}} and {{evidenceauthorization}}.
+The `C1uq5Dr+x8GSEJTSKW5B` authorization is the new authorization type,
+which is either `attestation-result-01` or `encrypted-evidence-02`.
+These are detailed in {{trustworthyauthorization}} and {{evidenceauthorization}}.
 
 Here is an example:
 
@@ -253,14 +255,19 @@ Here is an example:
 
 ## Step 4: Obtain Attestation Result
 
-The client now uses the token `yoW1RL2zPBzYEHBQ06Jy` as a fresh nonce.
+The client now uses the (example) token `yoW1RL2zPBzYEHBQ06Jy` as a fresh nonce.
 It produces fresh Evidence, and provides this to the Verifier.
 
 The details of this step are not in scope for this document.
 As an example, it might use TPM-CHARRA {{?RFC9684}}, or X, or Y (XXX: insert more options)
 
 The format result is described in {{attestation-response}} and {{evidence-response}}.
-(An example from {{-AR4SI}} would be good here)
+(EDIT: An example from {{-AR4SI}} would be good here)
+Assume the following binary blob is the response:
+
+~~~~~~~~~~
+yePAuQj5xXAnz87/7ItOkDTk5Y4syoW1RL2zPBzYEHBQ06JyUvZDYPYjeTqwlPszb9Grbxw0UAEFx5DxObV1
+~~~~~~~~~~
 
 This result is sent as a POST to `https://example.com/acme/chall/prV_8235AD9d`
 
@@ -431,7 +438,7 @@ The Evidence is encrypted so that the Server it never able to see any PII which 
 The choice of Verifier is more complex in the background-check model.
 Not only does ACME Server have to have the correct trust anchors to verify the resulting Attestation Results, but the ACME Server will need some kind of business relationship with the Verifier in order for the Verifier to be willing to appraise Evidence.
 
-The `trustworthy` identifier and challenge/response is not an actual identifier.
+The `trustworthy` identifier is not an actual identifier.
 It does not result in any specific contents to the certificate Subject or SubjectAltName.
 
 # IANA Considerations
