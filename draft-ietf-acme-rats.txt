@@ -748,7 +748,7 @@ yePAuQj5xXAnz87/7ItOkDTk5Y4syoW1RL2zPBzYEHBQ06JyUvZDYPYjeTqwlPszb9Grbxw0UAEFx5Dx
 
    [letsencrypt]
               Electronic Frontier Foundation, "Celebrating Ten Years of
-              Encrypting the Web with Let’s Encrypt", 20 August 2025,
+              Encrypting the Web with Let's Encrypt", 20 August 2025,
               <https://www.eff.org/deeplinks/2023/08/celebrating-ten-
               years-encrypting-web-lets-encrypt>.
 
