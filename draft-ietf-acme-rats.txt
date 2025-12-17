@@ -5,10 +5,10 @@
 Automated Certificate Management Environment                   C. P. Liu
 Internet-Draft                                                    Huawei
 Intended status: Standards Track                            M. Ounsworth
-Expires: 16 June 2026                                                   
+Expires: 20 June 2026                                                   
                                                            M. Richardson
                                             Sandelman Software Works Inc
-                                                        13 December 2025
+                                                        17 December 2025
 
 
 Automated Certificate Management Environment (ACME) rats Identifier and
@@ -58,7 +58,7 @@ Status of This Memo
    time.  It is inappropriate to use Internet-Drafts as reference
    material or to cite them other than as "work in progress."
 
-   This Internet-Draft will expire on 16 June 2026.
+   This Internet-Draft will expire on 20 June 2026.
 
 Copyright Notice
 
