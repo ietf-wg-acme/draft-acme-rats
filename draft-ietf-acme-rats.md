@@ -196,7 +196,7 @@ An example extended Order Object that includes confirmation that this order will
 
     "identifiers": [
       { "type": "trustworthy", "value": "trustworthy" },
-      { "type": "dns",         "value": "0123456789abcdef" },
+      { "type": "dns",         "value": "client01.finance.example" },
     ],
 
     "authorizations": [
@@ -208,8 +208,6 @@ An example extended Order Object that includes confirmation that this order will
   }
 ~~~~~~~~~~
 
-EDNOTE: why does the "dns" identifier have a value "0123456789abcdef"? Shouldn't this be "client01.finance.example" to match the newOrder above?
-
 EDNOTE: as attestation becomes more complicated, the server might want to prompt for more than one attestation -- for example it might want both attestation of secure boot of the application server, and attestation of the key in the HSM. I suggest that the server is allowed to use the value of the "trustworthy" identifier as a free-form text field to request multiple attestations.
 
 For example, this should be valid:
@@ -218,7 +216,7 @@ For example, this should be valid:
     "identifiers": [
       { "type": "trustworthy", "value": "trustworthy-01" },
       { "type": "trustworthy", "value": "trustworthy-02" },
-      { "type": "dns",         "value": "0123456789abcdef" },
+      { "type": "dns",         "value": "client01.finance.example" },
     ],
 ```
 
@@ -228,7 +226,7 @@ or this:
     "identifiers": [
       { "type": "trustworthy", "value": "platform" },
       { "type": "trustworthy", "value": "key" },
-      { "type": "dns",         "value": "0123456789abcdef" },
+      { "type": "dns",         "value": "client01.finance.example" },
     ],
 ```
 
