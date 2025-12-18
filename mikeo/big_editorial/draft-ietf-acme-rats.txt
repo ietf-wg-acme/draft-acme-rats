@@ -270,6 +270,9 @@ Table of Contents
 
 1.2.  Related work
 
+   TODO: need a compare & contrast with draft-ietf-acme-device-attest.
+   @Ganesh, you're an author on both, could you write this text?
+
    [CSRATT] define a mechanism for carrying arbitrary remote attestation
    data within a certificate signing request (CSR) object (PKCS#10 or
    CRMF).  Since ACME internally uses PKCS#10 CSRs, this provides an
