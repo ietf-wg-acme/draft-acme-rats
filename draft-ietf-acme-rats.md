@@ -4,7 +4,7 @@ category: std
 submissionType: IETF
 ipr: trust200902
 lang: en
-title: Automated Certificate Management Environment (ACME) rats Identifier and Challenge Type
+title: Automated Certificate Management Environment (ACME) Remote Attestation (RATS) Identifier and Challenge Type
 abbrev: acme-rats
 docname: draft-ietf-acme-rats-latest
 area: "Security"
@@ -27,6 +27,7 @@ author:
     email: liuchunchi@huawei.com
  -
     fullname: Mike Ounsworth
+    organization: Cryptic Forest Software, Ltd
     email: mike@ounsworth.ca
  -
     fullname: Michael Richardson
@@ -58,7 +59,7 @@ informative:
 
 --- abstract
 
-This document describes an approach where an ACME Server can challenge an ACME Client to provide a Remote Attestation Evidence or Remote Attestation Result in any format supported by the Conceptual Message Wrapper.
+This document describes an approach where an ACME Server can challenge an ACME Client to provide Evidence, Endorsements, or Attestation Result according to the Remote ATtestation procedureS (RATS) framework in any format supported by the Conceptual Message Wrapper (CMW).
 
 The ACME Server can optionally challenge the Client for specific claims that it wishes attestation for.
 
@@ -72,69 +73,67 @@ When an ACME client needs a certificate, it connects to the ACME server, providi
 These identities become part of the certificate, usually a Fully Qualified Domain Name (FQDN) that goes into the Subject Alt Name (SAN) for a certificate.
 Prior to ACME, the authorization process of obtaining a certificate from an operator of a (public) certification authority was non-standard and ad-hoc.
 It ranged from sending faxes on company letterhead to answering an email sent to a well-known email address like `hostmaster@example.com`, evolving into a process where some randomized nonce could be placed in a particular place on the target web server.
-The point of this process is to prove that the given DNS FQDN was controlled by the client system.
+The point of this process is to prove that the given DNS FQDN was controlled by the same client system initiating the certificate request.
 
-ACME standardized the process, allowing for automation for certificate issuance.
+ACME standardized the process of proving domain control, allowing for full automation of certificate issuance.
 It has been a massive success: increasing HTTPS usage from 27% in 2013 to over 80% in 2019 {{letsencrypt}}.
 
-While the process supports many kinds of identifiers: email addresses, DTN node IDs, and can create certificates for client use.
-However, these combinations have not yet become as popular, in part because these types of certificates are usually located on much more general purpose systems such as laptops and computers used by people.
+While the ACME process supports many kinds of identifiers such as email addresses and DTN node IDs, and other client-type identifiers, ACME for client certificates has not yet become as popular, in part because these types of certificates are usually located on much more general purpose systems such as laptops and computers used by people in which there is no standardized automated way to perform proof of control.
 
-The concern that Enterprises have with the use of client side certificates has been the trustworthiness of the client system itself.
-Such systems have many more configurations, and are often considered harder to secure as a result.
-While well managed mutual TLS (client and server authentication via PKIX certificate) has significant advantages over the more common login via username/passowrd,  if the private key associated with a client certificates is disclosed or lost, then the impact can be more significant.
+In addition to proving control of an identifier, a major concern that enterprises have with the use of client certificates has been the trustworthiness of the client system itself.
+Such systems have many more configurations, and are often harder to assess the security posture of as a result.
+While well managed mutual TLS (client and server authentication via PKIX certificate) has significant advantages over the more common login via username/password, if the private key associated with a client certificates is disclosed or lost, then the impact can be more significant.
 
-The use case envisioned here is that of an enterprise.  A Network Operations Center (NOC)
+One use case envisioned here is that of client devices within an enterprise.  A Network Operations Center (NOC)
 (which may be internal or an external contracted entity) will issue (client) certificates to devices that can prove via remote attestation that they are running an up-to-date operating system as well as the enterprise-required endpoint security software.
 
-This is a place where Remote Attestation can offer additional assurance {{RFC9334}}.
-If the software on the client is properly designed, and is up to date, then it is easier to assure that the private key will be safe.
+Another use case envisioned is issuance of server certificates, for example TLS certificates or code-signing certificates, where the Certification Authority (CA) requires, in addition to proof of control of the identifiers, some proof about the security posture of the operating environment, such as how the private key is stored, or the running environment of the server application.
 
-This can be extended to Bring Your Own Device (BYOD) by having those devices provide an equivalent Attestation Result.
+This is a place where Remote Attestation Procudures (RATS) {{RFC9334}} can offer additional assurance.
+Remote Attestation provides a framework as well as an emerging ecosystem of standardized data formats and tools for a device to provide a remote peer with proof of various system properties in the form of measured evidence and third-party endorsements.
+ACME servers can leverage the Remote Attestation ecosystem either by directly consuming evidence and endorsements, or by having a third-party verifier assess the evidence and endorsements and produce an attestation result which is then provided to the ACME server.
 
-In this document, we propose an approach where ACME Server MAY challenge the ACME Client to produce an Attestation Evidence or Attestation Result in any format that is supported by the RATS Conceptual Message Wrapper {{-CMW}}, for instance, an EAT (entity attestation token).
-The ACME Server then verifies the attestation result against an appraisal policy as required by by the requested certificate profile.
+In this document, we propose an extension to the ACME protocol where ACME Server MAY challenge the ACME Client to produce an Attestation Evidence or Attestation Result in any format that is supported by the RATS Conceptual Message Wrapper {{-CMW}}, for instance, an EAT (entity attestation token).
+The ACME Server then verifies the attestation result against an appraisal policy as required by the requested certificate profile.
+Essentially, this provides a mechanism for the ACME server to challenge for and transport Remote Attestation data, but it leaves out-of-scope how the ACME server verifies the provided data according to its certificate profiles.
+Remote Attestation can in some cases provide proof of control of an identifier, such as a hardware serial number or a cryptographic public key, but in general Remote Attestation will be at a lower level than the identifier going into the certificate such as a FQDN or an email address.
+Therefore the design of this extension does not replace the identity challenges in the ACME protocol, but acts supplementally to it.
 
 ACME can presently offer certificates with multiple identities.
 Typically, in a server certificate situation, each identity represents a unique FQDN that would be placed into the certificate as distinct Subject Alt Names (SAN).
 For instance each of the names: example.com, www.example.com, www.example.net and marketing.example.com might be placed in a single certificate for a server that provides web content under those four names.
 
 This document defines a new identity type, `trustworthy` that the ACME client can ask for.
-A new `attestation-result-01` challenge is defined as a new method that can be used to authorize this identity using a RATS Passport model.
-The `attestation-evidence-02` challenge is also defined, enabling a background check mechanism.
+A new `attestation-result-01` challenge is defined as a new method by which the ACME server can challenge the client to provide Remote Attestation according to the RATS Passport model.
+The `attestation-evidence-02` challenge is also defined, challenging the client to provide direct evidence according to the RATS Background Check model.
+In this way, the Certification Authority (CA) or Registration Authority (RA) issues certificates only to devices that can provide an appropriate attestation of the required properties / claims, indicating that the device from which the ACME request originates has passed the required security checks.
 
-In this way, the Certification Authority (CA) or Registration Authority (RA) issues certificates only to devices that can provide an appropriate attestation result, indicating that the device from which the ACME request originates has passed the required security checks.
+The term "remote attestation" covers a broad range of standardized and proprietary technologies and data formats and this specification tries to be as technology-agnostic as possible. However, it assumes that evidence could contain sensitive data and therefore needs an optional payload encryption mechanism to keep this information protected as at passes through the various layers of the ACME server and RA to a RATS Verifier, whereas attestation results are assumed to be non-sensitive and therefore do not require this extra protection.
 
 Attested ACME requests can form an essential building block towards the continuous monitoring/validation requirement of Zero-Trust principle when coupled with other operational measures, such as issuing only short-lived certificates.
 
 For ease of denotion, we omit the "ACME" adjective from now on, where Server means ACME Server and Client means ACME Client.
 
-## Attestation Results only
+## Design overview
 
-This document currently only defines the a mechanism to carry Attestation Results from the ACME client to the ACME server.
-It limits itself to the Passport model defined in {{RFC9334}}.
+Conceptually, the server is challenging the client to produce remote attestation as part of the certificate enrollment flow.
+However, this mechanism cannot be defined simply as an ACME challenge for a number of reasons.
 
-This is done to simplify the combinations, but also because it is likely that the Evidence required to make a reasonable assessment includes potentially privacy violating claims.
-This is particularly true when a device is a personal (BYOD) device; in that case the Verifier might not even be owned by the Enterprise,  but rather the device manufacturer.
+First, the ACME protocol {{RFC8555}} is designed such that a client requests a given identifier to appear in the certificate, and the server provides a list of proof-of-control challenges such as \{DNS-01, HTTP-01\} to which the client only needs to respond to one. The design goal here is that the remote attestation challenge supplements the identifier challenges rather than replaces them. Instead we want the behavior that the client must respond to one of \{DNS-01, HTTP-01\} and also provide remote attestation of the given list of attestable properties.
 
-In order to make use of the background check that Evidence would need to be encrypted from the Attesting Environment to the Verifier, via the ACME Server -- the Relying Party.
-Secondly, in order for the ACME Server to be able to securely communicate with an Enterprise located Verifier with that Evidence, then more complex trust relationships would need to be established.
-Thirdly, the Enterprise Verifier system would then have to expose itself to the ACME Server, which may be located outside of the Enterprise.
-The ACME Server, for resiliency and loading reasons may be a numerous and dynamic cluster of systems, and providing appropriate network access controls to enable this communication may be difficult.
+Second, an ACME client can request multiple identifiers in a single certificate request and so ACME challenges are per identifier. By contrast, remote attestation typically applies to the entire client device or private key and is not coupled to the requested identifiers.
 
-Instead, the use of the Passport model allows all Evidence to remain within an Enterprise,
-and for Verifier operations to be more self-contained.
+The desired behavior is accomplished by registering a dummy identifier type called "trustworthy" which always carries the value "trustworthy", and within that identifier the server can present RATS type challenges such as `attestation-result-01` or `attestation-evidence-01`.
+
+EDNOTE: why not use "attested" or "rats"?
+
+EDNOTE: there will be cases where the attestation does act as proof-of-control of an identifier, such as validating a Serial Number DN component. So do we want to allow `attestation-result-01` and `attestation-evidence-01` to be used within any identifier so that you can say DNS-01 or HTTP-01 or RATS for cases where that makes sense?
 
 ## Related work
 
-{{CSRATT}} define trustworthy claims about the physical storage location of a key pair's private key.
-This mechanism only relates to how the private key is kept.
-It does not provide any claim about the rest of the mechanisms around access to the key.
-A key could well be stored in the most secure way imaginable, but in order to use the key some command mechanism must exist to invoke it.
-
-The mechanism created in this document allows certification authority to access the trustworthiness of the entire system.
-That accessment goes well beyond how and where the private key is stored.
-ACME uses Certificate Signing Requests, so there is no reason that {{CSRATT}} could not be combined with the mechanism described in this document.
+{{CSRATT}} define a mechanism for carrying arbitrary remote attestation data within a certificate signing request (CSR) object (PKCS#10 or CRMF). Since ACME internally uses PKCS#10 CSRs, this provides an alternate mechanism for carrying remote attestation within ACME.
+This specification provides additional functionality that cannot be achieved via attested CSRs, namely giving the ACME server a way to challenge the client not only for attestation, for for attestation of specific properties. It also decouples the attestation from the CSR, which future-proofs this mechanism in case CSR is removed as a mandatory part of the ACME protocol at some future time.
+That said, there is no reason that {{CSRATT}} could not be combined with the mechanism described in this document; for example a client could provide an attested CSR proving protection properties of the private key within an HSM, and also respond to an ACME remote attestation challenge proving the security posture of the application stack.
 
 {{RATSPA}} defines a summary of a local assessment of posture for managed systems and across various  layers.
 The claims and mechanisms defined in {{RATSPA}} are a good basis for the assessment that will need to be done in order to satisfy the trustworthiness challenge detailed in this document.
@@ -143,19 +142,18 @@ The claims and mechanisms defined in {{RATSPA}} are a good basis for the assessm
 
 This is a new identifier type.
 
-type (required, string):
-: The string "trusthworthy".
-
-value (required, string):
-: The constant string "trustworthy"
+* type (required, string): The string "trusthworthy".
+* value (required, string): The constant string "trustworthy"
 
 The following sections detail the changes.
+
+EDNOTE: why not use "attested" or "rats"?
 
 ## Step 1: newOrder Request Object
 
 During the certificate order creation step, the Client sends a /newOrder JWS request (Section 7.4 of {{RFC8555}}) whose payload contains an array of identifiers.
 
-The client adds the `trustworthy` identifier to the array.
+The client MAY add the `trustworthy` identifier to the array to indicate that it is capable of providing remote attestation. This is entirely optional and the server MAY choose to challenge for attestation or not according to its configuration for the requested certificate profile irrespective of whether the client indicated that it is attestation-capable.
 
 This MUST NOT be the only identifier in the array, as this identity type does not, on its own, provide enough authorization to issue a certificate.
 In this example, a `dns` identity is chosen for the domain name `client01.finance.example`.
@@ -183,7 +181,7 @@ An example extended newOrder JWS request:
 
 As explained in {{RFC8555, Section 7.1.3}}, the server returns an Order Object.
 
-An example extended Order Object that includes
+An example extended Order Object that includes confirmation that this order will include remote attestation:
 
 ~~~~~~~~~~
   POST /acme/new-order HTTP/1.1
@@ -208,21 +206,46 @@ An example extended Order Object that includes
   }
 ~~~~~~~~~~
 
-Note that the URLs listed in the `authorizations` array are arbitrary URLs created by the ACME server.
-The last component is a randomly created string created by the server.
-For simplicity, the first URL is identical to the example given in {{RFC8555}}.
+EDNOTE: why does the "dns" identifier have a value "0123456789abcdef"? Shouldn't this be "client01.finance.example" to match the newOrder above?
+
+EDNOTE: as attestation becomes more complicated, the server might want to prompt for more than one attestation -- for example it might want both attestation of secure boot of the application server, and attestation of the key in the HSM. I suggest that the server is allowed to use the value of the "trustworthy" identifier as a free-form text field to request multiple attestations.
+
+For example, this should be valid:
+
+```
+    "identifiers": [
+      { "type": "trustworthy", "value": "trustworthy-01" },
+      { "type": "trustworthy", "value": "trustworthy-02" },
+      { "type": "dns",         "value": "0123456789abcdef" },
+    ],
+```
+
+or this:
+
+```
+    "identifiers": [
+      { "type": "trustworthy", "value": "platform" },
+      { "type": "trustworthy", "value": "key" },
+      { "type": "dns",         "value": "0123456789abcdef" },
+    ],
+```
+
+This could be how we sneak in that ACME Claims Hint thing; like the registry that we're trying to create in {{claimshints}} below could be carried in the value field of our dummy identifier.
+
 
 ## Step 3: Authorization Object
 
 The Server has created an Authorization Object for the trustworthy and dns identifiers.
 
+
 The client accesses each authorization object from the URLs given in the Order Object.
-In this example, the `PAniVnsZcis` authorization relates to the `dns` identifier, and
-it is not changed from {{RFC8555, Section 8}}.
+Entries in the authorizations list are not required to be in the same order as, or even 1:1 with, the identifiers, so in this example, the `PAniVnsZcis` authorization relates to the `dns` identifier, and is unchanged from {{RFC8555, Section 8}}.
 
 The `C1uq5Dr+x8GSEJTSKW5B` authorization is the new authorization type,
 which is either `attestation-result-01` or `encrypted-evidence-02`.
 These are detailed in {{trustworthyauthorization}} and {{evidenceauthorization}}.
+
+EDNOTE: what about `attestation-evidence-01` defined below?
 
 Here is an example:
 
@@ -252,7 +275,15 @@ Here is an example:
    }
 ~~~~~~~~~~
 
+EDNOTE: wait, why is it challenges.type = "trustworthy". Shouldn't that be `attestation-result-01` or `encrypted-evidence-02`?
+
+EDNOTE: I would like this example to show the server issuing both the `attestation-result-01` and `encrypted-evidence-02` challenge in order to mean that the client could satisfy this challenge with either evidence or an AR.
+
+EDNOTE: Are we providing a way for the server to prompt for certain claims that it needs attested? If so, that should appear in this section and example, right?
+
 ## Step 4: Obtain Attestation Result
+
+EDNOTE: Here we're gonna fracture because the client may need to do different things based on whether it was prompted for `attestation-result-01` or `attestation-evidence-01` or `encrypted-evidence-02`
 
 The client now uses the (example) token `yoW1RL2zPBzYEHBQ06Jy` as a fresh nonce.
 It produces fresh Evidence, and provides this to the Verifier.
