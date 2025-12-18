@@ -131,6 +131,8 @@ EDNOTE: there will be cases where the attestation does act as proof-of-control o
 
 ## Related work
 
+TODO: need a compare & contrast with draft-ietf-acme-device-attest. @Ganesh, you're an author on both, could you write this text?
+
 {{CSRATT}} define a mechanism for carrying arbitrary remote attestation data within a certificate signing request (CSR) object (PKCS#10 or CRMF). Since ACME internally uses PKCS#10 CSRs, this provides an alternate mechanism for carrying remote attestation within ACME.
 This specification provides additional functionality that cannot be achieved via attested CSRs, namely giving the ACME server a way to challenge the client not only for attestation, for for attestation of specific properties. It also decouples the attestation from the CSR, which future-proofs this mechanism in case CSR is removed as a mandatory part of the ACME protocol at some future time.
 That said, there is no reason that {{CSRATT}} could not be combined with the mechanism described in this document; for example a client could provide an attested CSR proving protection properties of the private key within an HSM, and also respond to an ACME remote attestation challenge proving the security posture of the application stack.
