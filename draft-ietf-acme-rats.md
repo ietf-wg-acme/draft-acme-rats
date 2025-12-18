@@ -144,7 +144,7 @@ The claims and mechanisms defined in {{RATSPA}} are a good basis for the assessm
 
 This is a new identifier type.
 
-* type (required, string): The string "trusthworthy".
+* type (required, string): The string "trustworthy".
 * value (required, string): The constant string "trustworthy"
 
 The following sections detail the changes.
