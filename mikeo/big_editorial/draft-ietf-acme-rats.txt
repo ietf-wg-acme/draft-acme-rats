@@ -360,7 +360,7 @@ Table of Contents
 
        "identifiers": [
          { "type": "trustworthy", "value": "trustworthy" },
-         { "type": "dns",         "value": "0123456789abcdef" },
+         { "type": "dns",         "value": "client01.finance.example" },
        ],
 
        "authorizations": [
@@ -370,10 +370,6 @@ Table of Contents
 
        "finalize": "https://example.com/acme/order/T..fgo/finalize",
      }
-
-   EDNOTE: why does the "dns" identifier have a value
-   "0123456789abcdef"?  Shouldn't this be "client01.finance.example" to
-   match the newOrder above?
 
    EDNOTE: as attestation becomes more complicated, the server might
    want to prompt for more than one attestation -- for example it might
@@ -386,13 +382,13 @@ Table of Contents
 
    "identifiers": [ { "type": "trustworthy", "value": "trustworthy-01"
    }, { "type": "trustworthy", "value": "trustworthy-02" }, { "type":
-   "dns", "value": "0123456789abcdef" }, ],
+   "dns", "value": "client01.finance.example" }, ],
 
    or this:
 
    "identifiers": [ { "type": "trustworthy", "value": "platform" }, {
    "type": "trustworthy", "value": "key" }, { "type": "dns", "value":
-   "0123456789abcdef" }, ],
+   "client01.finance.example" }, ],
 
    This could be how we sneak in that ACME Claims Hint thing; like the
    registry that we're trying to create in Section 5 below could be
