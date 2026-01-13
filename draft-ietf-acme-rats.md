@@ -156,7 +156,9 @@ value (required, string):
 
 A Server MAY issue challenges for multiple "rats" identifiers in the same ACME protocol flow.
 
-The Client MUST complete the challenge by returning a CMW {{-CMW}} which MAY contain remote attestation data in any format (EAT (cite), WebAuthn (cite), TPM attest_certify (cite), PKIXKeyAttesation (cite), proprietary, etc), and of any RATS conceptual message type (evidence, endorsement, or attestation result). This document does not remove the need for vendors to perform interoperability testing with CAs to ensure compatibility.
+The Client MUST complete the challenge by returning a CMW {{-CMW}} which MAY contain remote attestation data in any defined CMW format, including: EAT {{RFC9711}}, WebAuthn (cite), TPM attest_certify (?cite), PKIXKeyAttesation {{I-D.ietf-rats-pkix-evidence}}.
+It may contain other RATS conceptual message types such as evidence, endorsement, or attestation result as appropriate for the mode.
+This document does not remove the need for vendors to perform interoperability testing with CAs to ensure compatibility.
 
 ## remote-attest-01 Challenge {#rats-chall}
 
