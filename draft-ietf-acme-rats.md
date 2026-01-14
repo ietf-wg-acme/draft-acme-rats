@@ -162,7 +162,8 @@ This document does not remove the need for vendors to perform interoperability t
 
 ## remote-attest-01 Challenge {#rats-chall}
 
-A `remote-attest-01` challenge type asks the Client to prove provide remote attestation. The Client SHOULD use the provided
+A `remote-attest-01` challenge type asks the Client to provide Evidence appropriate for making a  trustworthiness decision.
+The Client SHOULD use the provided
 `freshness_nonce` as an attestation freshness nonce, if the Client's underlying attestation technology supports freshness nonces.
 
 The Server MAY include a `attestClaimsHint` containing a list of claims that it would like to see in the
@@ -315,7 +316,7 @@ Here is an example `remote-attest-01` challenge:
    }
 ~~~~~~~~~~
 
-In this example, the Server is indicating that it wants secure-boot type remote attestation including the following claims:
+In this example, the Server is indicating that it wants a remote attestation result including the following claims:
 
 ~~~
 "attestClaimsHint": ["hwmodel", "swversion", "submods", "manifests",],
