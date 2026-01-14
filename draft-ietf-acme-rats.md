@@ -4,7 +4,7 @@ category: std
 submissionType: IETF
 ipr: trust200902
 lang: en
-title: Automated Certificate Management Environment (ACME) rats Identifier and Challenge Type
+title: Automated Certificate Management Environment (ACME) Remote Attestation Identifier and Challenge Type
 abbrev: acme-rats
 docname: draft-ietf-acme-rats-latest
 area: "Security"
@@ -99,7 +99,7 @@ ACME can presently offer certificates with multiple identities.
 Typically, in a server certificate situation, each identity represents a unique FQDN that would be placed into the certificate as distinct Subject Alt Names (SAN).
 For instance each of the names: example.com, www.example.com, www.example.net and marketing.example.com might be placed in a single certificate for a server that provides web content under those four names.
 
-This document defines a new identity type, `trustworthy` that the ACME client can ask for.
+This document defines a new identity type, `remote-attestation` that the ACME client can ask for.
 A new `attestation-result-01` challenge is defined as a new method that can be used to authorize this identity using a RATS Passport model.
 The `attestation-evidence-02` challenge is also defined, enabling a background check mechanism.
 
@@ -139,26 +139,27 @@ ACME uses Certificate Signing Requests, so there is no reason that {{CSRATT}} co
 {{RATSPA}} defines a summary of a local assessment of posture for managed systems and across various  layers.
 The claims and mechanisms defined in {{RATSPA}} are a good basis for the assessment that will need to be done in order to satisfy the trustworthiness challenge detailed in this document.
 
-# ACME Extensions
+# Overview
 
 
-## 'rats' identifier
+## 'remote-attestation' identifier
 
 A new identifier type to indicate client support or server request for remote attestation.
 This is a "dummy" identifier in that the `value` does not contain an actual identifier, but instead a property that is the be remotely attested.
 The `value` MAY be left empty, or contain a property hint as per {{prophints}}.
 
 type (required, string):
-: The string "rats".
+: The string "remote-attestation".
 
 value (required, string):
 : A string from the  ACME Attest Claims Hint Registry defined in {{prophints}}, which could be the empty string.
 
-A Server MAY issue challenges for multiple "rats" identifiers in the same ACME protocol flow.
+A Client MAY advertize support for multiple "remote-attestation" identifiers in the same ACME protocol flow.
 
-The Client MUST complete the challenge by returning a CMW {{-CMW}} which MAY contain remote attestation data in any defined CMW format, including: EAT {{RFC9711}}, WebAuthn (cite), TPM attest_certify (?cite), PKIXKeyAttesation {{I-D.ietf-rats-pkix-evidence}}.
-It may contain other RATS conceptual message types such as evidence, endorsement, or attestation result as appropriate for the mode.
-This document does not remove the need for vendors to perform interoperability testing with CAs to ensure compatibility.
+A Server MAY issue challenges for multiple "remote-attestation" identifiers in the same ACME protocol flow. As the Server is authoritative for the requirements to be fulfilled for the given certificate request, the Server MAY choose not to issue a Challenge for every "remote-attestation" identifier type that the Client advertized support for, and conversely, the Server MAY issue a challenge for "remote-attestation" identifiers that the Client did not advertize support for.
+
+EDNOTE: Is there any reason for the client to include "remote-attestation" identifiers in the newOrder at all?
+
 
 ## remote-attest-01 Challenge {#rats-chall}
 
@@ -166,7 +167,12 @@ A `remote-attest-01` challenge type asks the Client to provide Evidence appropri
 The Client SHOULD use the provided
 `freshness_nonce` as an attestation freshness nonce, if the Client's underlying attestation technology supports freshness nonces.
 
-The Server MAY include a `attestClaimsHint` containing a list of claims that it would like to see in the
+The Server MAY include a `attestClaimsHint` containing a list of claims or specific properties that it would like to see attested.
+
+The Client MUST complete the challenge by returning a CMW {{-CMW}} which MAY contain remote attestation data in any defined CMW format, including: EAT {{RFC9711}}, WebAuthn (cite), TPM attest_certify (?cite), PKIXKeyAttesation {{I-D.ietf-rats-pkix-evidence}}.
+It may contain other RATS conceptual message types such as evidence, endorsement, or attestation result as appropriate for the mode.
+Since this specification allows wide flexibility on the contents of the remote attestation data, this document does not remove the need for vendors to perform interoperability testing with CAs to ensure compatibility.
+
 
 This section describes the challenge/response extensions and procedures to use them.
 
@@ -178,21 +184,21 @@ The basic fields `type` (which MUST be "remote-attest-01"), `url`, `status`, `va
 
 freshness_nonce (required, string):
 : A randomly created nonce provided by the server which MUST be included in the Attestation Results to provide freshness.
+
 EDNOTE TODO: we should decide whether this nonce MAY / SHOULD / SHOULD NOT / MUST NOT be the same as the ACME nonce or the ACME Challenge URL.
 
 attestClaimsHint (optional, list of string)
 : If the Server requires attestation of specific claims or properties in order to issue the requested certificate profile, then it MAY list one or more types of claims from the newly-defined ACME Attest Claims Hints registry defined in {{prophints}}.
 
-verifierEncryptionCredential (optional, string url)
+verifierEncryptionCredential (optional, JWK)
 : A URL where the Client can fetch the encryption public key that it can use for encrypting the rats challenge response.
 
 
 The `attestClaimsHint` SHOULD contain values from the "JSON Web Token Claims" registry created by {{!RFC7519}}, in particular claims related to remote attestation as registered in {{!RFC9711}} and related documents, but MAY contain non-registered values. The Client SHOULD attempt to collect evidence, endorsements, or attestation results from its local environment that satisfies these claims, either directly if the local environment supports EAT {{!RFC7519}}, or mapped to the closest equivalent claims in the supported format. The Client MAY ignore any claims that it does not recognize or that it is unable to collect remote attestation for. In other words, the Client SHOULD return what it has rather than failing, and allow the Server to decide if it is acceptable for the requested certificate profile.
 
-The `verifierEncryptionCredential` is for cases where the evidence contains sensitive data, such as identifiers that could be linkable to a person and therefore qualify as Personally Identifiable Information and the Client wishes to protect it against accidental logging, for example by HTTP proxies, as it passes through the Server's application stack. 
-The design of passing a URL to the encryption public key as part of the `remote-attest-01` challenge object allows the Server to manage multiple verifierEncryptionCredentials, and choose the one appropriate to this certificate request flow. 
-The `verifierEncryptionCredential` URL SHOULD be a semi-static UUID-style URL so that the Client can create a cache of previously-fetched encryption credentials, indexed by the path component of the `verifierEncryptionCredential` URL. 
-The Server MAY, for example, use the public key fingerprint as the path component in the `verifierEncryptionCredential` URL. The referenced credential SHOULD be in the JSON Web Key (JWK) {{!RFC7517}} format, but MAY be in other reasonable formats such as a DER or PEM encoded X.509 certificate.
+The `verifierEncryptionCredential` is an encryption key in JSON Web Key (JWK) {!RFC7517} format that the Client can use to encrypt the attestation data that it will return.
+It is intended for cases where the evidence contains sensitive data the Client wishes to protect it against accidental logging, for example by HTTP proxies, as it passes through the Server's application stack. This could for example include data such as identifiers that could be linkable to a person and therefore qualify as Personally Identifiable Information, or any other detailed type of system measurement that the Client deems sensitive.
+The credential SHOULD be in the JSON Web Key (JWK) {{!RFC7517}} format, but MAY be in other reasonable formats such as a DER or PEM encoded X.509 certificate.
 
 EDNOTE: in the name of simplicity, make this "MUST JWK"?
 
@@ -229,8 +235,8 @@ An example extended newOrder JWS request:
     "payload": base64url({
       "identifiers": [
         { "type": "dns", "value": "client01.finance.example" },
-        { "type": "rats", "value": "secure-boot" },
-        { "type": "rats", "value": "hsm" },
+        { "type": "remote-attestation", "value": "measured-boot" },
+        { "type": "remote-attestation", "value": "hsm" },
       ],
     }),
     "signature": "H6ZXtGjTZyUnPeKn...wEA4TklBdh3e454g"
@@ -255,8 +261,8 @@ An example extended Order Object that includes RATS challenges is:
 
     "identifiers": [
         { "type": "dns", "value": "client01.finance.example" },
-        { "type": "rats", "value": "secure-boot" },
-        { "type": "rats", "value": "hsm" },
+        { "type": "remote-attestation", "value": "measured-boot" },
+        { "type": "remote-attestation", "value": "hsm" },
     ],
 
     "authorizations": [
@@ -299,8 +305,8 @@ Here is an example `remote-attest-01` challenge:
      "expires": "2025-09-30T14:09:07.99Z",
 
      "identifier": {
-       "type": "rats",
-       "value": "secure-boot"
+       "type": "remote-attestation",
+       "value": "measured-boot"
      },
 
      "challenges": [
@@ -316,6 +322,8 @@ Here is an example `remote-attest-01` challenge:
    }
 ~~~~~~~~~~
 
+EDNOTE: TODO: check 8555 if "token" is mandatory, and if so, use that to carry the attestation freshness nonce.
+
 In this example, the Server is indicating that it wants a remote attestation result including the following claims:
 
 ~~~
@@ -324,20 +332,20 @@ In this example, the Server is indicating that it wants a remote attestation res
 
 meaning that it is interesting in the type of device and what software is running on it. This field is called a "hint" because the ACME Client might not be capable of obtaining remote attestation evidence, endorsements, or attestation results that directly map to these claims. Servers SHOULD NOT we written to expect exactly these claims back. This mechanism does not remove the need for vendors to perform interop testing against CAs.
 
-EDNOTE: is the attestClaimsHint actually adding anything useful on top of the identifier values of "secure-boot", "hsm", "passkey", etc?
+EDNOTE: is the attestClaimsHint actually adding anything useful on top of the identifier values of "measured-boot", "hsm", "passkey", etc?
 
 
 
-## Step 4: Respond to RATS Challenge
+## Step 4: Respond to Remote Attestation Challenge
 
-The client now queries its local environment to obtain evidence, endorsements and/or attestation results to satisfy the RATS challenge.
+The client now queries its local environment to obtain evidence, endorsements and/or attestation results to satisfy the Remote Attestation challenge.
 
 If the underlying remote attestation technology supports a freshness nonce, then the Client passes the (example) token `yoW1RL2zPBzYEHBQ06Jy` into the underlying attestation service as the nonce.
 
-The payload of the RATS Challenge response MUST be a CMW {{-CMW}}, but the underlying payload type within the CMW is left unconstrained and therefore the details of collecting the remote attestation data for this this step are not in scope for this document.
+The payload of the Remote Attestation Challenge response MUST be a CMW {{-CMW}}, but the underlying payload type within the CMW is left unconstrained and therefore the details of collecting the remote attestation data for this this step are not in scope for this document.
 As an example, it might use EAT {{?RFC9711}}, TPM-CHARRA {{?RFC9684}}, or X, or Y (XXX: insert more options)
 
-Assume the following binary blob is RATS evidence collected by the Client:
+Assume the following binary blob is Remote Attestation evidence collected by the Client:
 
 ~~~~~~~~~~
 yePAuQj5xXAnz87/7ItOkDTk5Y4syoW1RL2zPBzYEHBQ06JyUvZDYPYjeTqwlPszb9Grbxw0UAEFx5DxObV1
@@ -377,7 +385,7 @@ At this point, if the client were to re-retrieve the authorization object from s
 
 ## Step 5: Perform other challenges
 
-The client SHOULD now perform any other RATS or non-RATS challenges that were listed in the Order Object from step 2.
+The client SHOULD now perform any other Remote Attestation or non-Remote Attestation challenges that were listed in the Order Object from step 2.
 ACME provides no ordering constraint on the challenges, so the Client MAY process them in any order, including concurrently.
 
 
@@ -390,7 +398,7 @@ If all is well, it will result in a certificate being issued.
 
 # ACME Attest Properties Hint Registry {#prophints}
 
-In order for the client to communicate in the newOrder request what types of attestation it is capable of producing, and for the server to indicate in the newOrder response what properties it requires attestation of, this specification creates a new IANA registry called "ACME Attest Properties Hint Registry. The hint is used as the value of the "rats" identifier type, as described in {#new-order-req} and {#new-order-resp}. In order to preserve vendor flexibility, the initial values in the ACME Attest Properties Hint Registry are intended to be generic in nature, and decoupled from the RATS conceptual message type (evidence, endorsement, or attestation result) or attestation data format (EAT (cite), WebAuthn (cite), TPM attest_certify (cite), PKIXKeyAttestation (cite), or device-proprietary). This model expects CAs to publish documentation about what specific data formats they support, and for vendors to perform interoperability testing with CAs to ensure compatibility. Ultimately, the CA's certificate policies will be the authority on what evidence or attestation results it will accept.
+In order for the client to communicate in the newOrder request what types of attestation it is capable of producing, and for the server to indicate in the newOrder response what properties it requires attestation of, this specification creates a new IANA registry called "ACME Attest Properties Hint Registry. The hint is used as the value of the "remote-attestation" identifier type, as described in {#new-order-req} and {#new-order-resp}. In order to preserve vendor flexibility, the initial values in the ACME Attest Properties Hint Registry are intended to be generic in nature, and decoupled from the RATS conceptual message type (evidence, endorsement, or attestation result) or attestation data format (EAT (cite), WebAuthn (cite), TPM attest_certify (cite), PKIXKeyAttestation (cite), or device-proprietary). This model expects CAs to publish documentation about what specific data formats they support, and for vendors to perform interoperability testing with CAs to ensure compatibility. Ultimately, the CA's certificate policies will be the authority on what evidence or attestation results it will accept.
 
 The ACME Attest Claims Hint Registry is intended to help clients to collect evidence or attestation results that are most likely to be acceptable to the server, but are not a guaranteed replacement for performing interoperability testing between a given attesting device and a given CA. Similarly, an ACME attestation hint may not map one-to-one with attestation functionality exposed by the underlying attesting device, so ACME clients might need to act as intermediaries mapping ACME hints to vendor-specific functionality on a per-hardware-vendor basis.
 
@@ -410,7 +418,7 @@ See {{iana-propshints}} for the initial contents of this new registry.
 ## Enterprise WiFi Access
 
 In enterprise access cases, security administrators wish to check the security status of an accessing end device before it connects to the internal network.
-Endpoint Detection and Response (EDR) softwares can check the security/trustworthiness statuses of the device and produce an Attestation Result (AR) if the check passes. ACME-RATS procedures can then be used to redeem a certificate using the AR.
+Endpoint Detection and Response (EDR) softwares can check the security/trustworthiness statuses of the device and produce an Attestation Result (AR) if the check passes. ACME-RA procedures can then be used to redeem a certificate using the AR.
 
 With that being said, a more specific use case is as follows: an enterprise employee visits multiple campuses, and connects to each one's WiFi. For example, an inspector visits many (tens of) power substations a day, connects to the local WiFi, download log data, proceed to the next and repeat the process.
 
@@ -421,7 +429,7 @@ b. Password could risk leakage due to APP compromise, or during Internet transmi
 c. The RADIUS Client/Access Point/Switch is not aware of the identity of the accessing device, therefore cannot enforce more fine-grained access policies.
 
 An ideal user story is:
-1. When the inspector is at base (or whenever the Remote Attestation-based check is available), he get his device inspected and redeem a certificate using ACME-RATS.
+1. When the inspector is at base (or whenever the Remote Attestation-based check is available), he get his device inspected and redeem a certificate using ACME-RA.
 2. When at substation, the inspector authenticate to the WiFi using EAP-TLS, where all the substations have the company root CA installed.
 2*. Alternatively, the Step 2 can use EAP-repeater mode, where the RADIUS Client redirects the request back to the RADIUS Server for more advanced checks.
 
@@ -481,16 +489,14 @@ The initial registry contents is shown in the table below.
 |------------------|------------------------------|
 | ""               | Empty string. Indicates client support for, or a server request for, attestation without being specific about what type. Typically this means the client will produce whatever remote attestation data it is capable of. |
 | "hsm"            | Attestation that the private key associated with this certificate request is stored in cryptographic hardware such as a TPM or PKCS#11 HSM. In the case of PKCS#11 HSMs, the attestation SHOULD contain the PKCs#11 properties of the private key storage, as well as an indication of whether the cryptographic module is operating in FIPS mode. |
-| "secure_boot"    | Attestation from the device's onboard secure-boot stack of the device running the application. |
+| "measured_boot"    | Attestation from the device's onboard secure-boot stack of the device running the application. |
 | "os_patch_level" | Attestation to the version or patch level of the device's operating system.             |
 | "sw_manifest"    | A manifest list of all software currently running on the device.                        |
 | "fido2"          | A request for FIDO2-based user authentication; maybe this is to validate a user identifier directly against the FIDO2 data, or maybe this serves as a second-factor to the CA's certificate pickup flow. |
 
 In general, the target environment that the Server wants to be remotely attested is the environment where the application is running. The "hsm" property is an exception to this because this wants attestation from the cryptographic module instead.
 
-In cases where the ACME client is running on a different host from the application, remote attestation always refers to the application host. In other words, a centralized ACME client MUST fulfill the ACME rats challenge by getting the application server that will ultimately use the certificate to query its local environment for remote attestation, and the ACME client MUST NOT present remote attestation from the host where it is running.
-
-TODO: this is normative text that should move up to the body.
+In cases where the ACME client is running on a different host from the application, remote attestation always refers to the application host. In other words, a centralized ACME client MUST fulfill the ACME-RA challenge by getting the application server that will ultimately use the certificate to query its local environment for remote attestation, and the ACME client MUST NOT present remote attestation from the host where it is running.
 
 EDNOTE: I am somewhat surprised that a registry like this does not already exist associated with CMW.
 
@@ -500,3 +506,4 @@ EDNOTE: I am somewhat surprised that a registry like this does not already exist
 {:numbered="false"}
 
 TODO acknowledge.
+
