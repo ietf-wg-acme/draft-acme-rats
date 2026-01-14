@@ -11,7 +11,7 @@ area: "Security"
 workgroup: "Automated Certificate Management Environment"
 kw:
  - ACME
- - RATS
+ - Remote Attestation
  - Zero Trust
 venue:
   group: "Automated Certificate Management Environment"
@@ -123,11 +123,9 @@ First, the ACME protocol {{RFC8555}} is designed such that a client requests a g
 
 Second, an ACME client can request multiple identifiers in a single certificate request and so ACME challenges are per identifier. By contrast, remote attestation typically applies to the entire client device or private key and is not coupled to the requested identifiers.
 
-The desired behavior is accomplished by registering a dummy identifier type called "trustworthy" which always carries the value "trustworthy", and within that identifier the server can present RATS type challenges such as `attestation-result-01` or `attestation-evidence-01`.
+Consider an example where a Client requests a certificate for the DNS name "client01.finance.example" and the Server wants to respond that the client can fulfill either a DNS-01 or an HTTP-01 Challenge to prove ownership of that DNS same, and also the Client must provide two separate types of remote attestation, one measuring the boot stack and device integrity where the application runs, and a separate attestation proving that the subject private key is in an HSM. The desired behavior is \{DNS-01 OR HTTP-01\} AND measured-boot AND hsm. The only way for the Server to issue four Challenges in ACME that behave this way is to issue the DNS-01 and HTTP-01 under the same Identifier, and the measured-boot and hsm Challenges each under their own Identifier. To achieve this, {{sec-identifier}} introduces a new ACME Identifier type "remote-attestation" which is not really an identifier, but instead conveys the general type of attestation required.
 
-EDNOTE: why not use "attested" or "rats"?
-
-EDNOTE: there will be cases where the attestation does act as proof-of-control of an identifier, such as validating a Serial Number DN component. So do we want to allow `attestation-result-01` and `attestation-evidence-01` to be used within any identifier so that you can say DNS-01 or HTTP-01 or RATS for cases where that makes sense?
+EDNOTE: there will be cases where the attestation does act as proof-of-control of an identifier, such as validating a Serial Number DN component. So do we want to allow `attestation-result-01` and `attestation-evidence-01` to be used within any identifier so that you can say DNS-01 or HTTP-01 or remote-attestation for cases where that makes sense?
 
 ## Related work
 
@@ -143,7 +141,7 @@ The claims and mechanisms defined in {{RATSPA}} are a good basis for the assessm
 # Overview
 
 
-## 'remote-attestation' identifier
+## 'remote-attestation' identifier {#sec-identifier}
 
 A new identifier type to indicate client support or server request for remote attestation.
 This is a "dummy" identifier in that the `value` does not contain an actual identifier, but instead a property that is the be remotely attested.
@@ -170,7 +168,7 @@ The Client SHOULD use the provided
 
 The Server MAY include a `attestClaimsHint` containing a list of claims or specific properties that it would like to see attested.
 
-The Client MUST complete the challenge by returning a CMW {{-CMW}} which MAY contain remote attestation data in any defined CMW format, including: EAT {{RFC9711}}, WebAuthn (cite), TPM attest_certify (?cite), PKIXKeyAttesation {{I-D.ietf-rats-pkix-evidence}}.
+The Client MUST complete the challenge by returning a CMW {{-CMW}} which MAY contain remote attestation data in any defined CMW format, including: EAT {{RFC9711}}, WebAuthn (cite), TPM attest_certify (?cite), PKIXKeyAttesation {{RATSKA}}.
 It may contain other RATS conceptual message types such as evidence, endorsement, or attestation result as appropriate for the mode.
 Since this specification allows wide flexibility on the contents of the remote attestation data, this document does not remove the need for vendors to perform interoperability testing with CAs to ensure compatibility.
 
@@ -192,7 +190,7 @@ attestClaimsHint (optional, list of string)
 : If the Server requires attestation of specific claims or properties in order to issue the requested certificate profile, then it MAY list one or more types of claims from the newly-defined ACME Attest Claims Hints registry defined in {{prophints}}.
 
 verifierEncryptionCredential (optional, JWK)
-: A URL where the Client can fetch the encryption public key that it can use for encrypting the rats challenge response.
+: A URL where the Client can fetch the encryption public key that it can use for encrypting the remote-attestation challenge response.
 
 
 The `attestClaimsHint` SHOULD contain values from the "JSON Web Token Claims" registry created by {{!RFC7519}}, in particular claims related to remote attestation as registered in {{!RFC9711}} and related documents, but MAY contain non-registered values. The Client SHOULD attempt to collect evidence, endorsements, or attestation results from its local environment that satisfies these claims, either directly if the local environment supports EAT {{!RFC7519}}, or mapped to the closest equivalent claims in the supported format. The Client MAY ignore any claims that it does not recognize or that it is unable to collect remote attestation for. In other words, the Client SHOULD return what it has rather than failing, and allow the Server to decide if it is acceptable for the requested certificate profile.
@@ -218,13 +216,13 @@ If the Server provided a `verifierEncryptionCredential` and the Client wishes to
 
 ## Step 1: newOrder Request Object {#new-order-req}
 
-During the certificate order creation step, the Client sends a /newOrder JWS request (Section 7.4 of {{RFC8555}}) whose payload contains an array of identifiers. To indicate support for remote attestation, the client adds one or more `rats` identifiers to the array of identifiers. This is entirely optional and the server MAY choose to challenge for attestation or not according to its configuration for the requested certificate profile irrespective of whether the client indicated that it is attestation-capable.
+During the certificate order creation step, the Client sends a /newOrder JWS request (Section 7.4 of {{RFC8555}}) whose payload contains an array of identifiers. To indicate support for remote attestation, the client adds one or more `remote-attestation` identifiers to the array of identifiers. This is entirely optional and the server MAY choose to challenge for attestation or not according to its configuration for the requested certificate profile irrespective of whether the client indicated that it is attestation-capable.
 
-The "rats" identifier MAY appear as the only identifier type in the array, but only if the supported remote attestation type is capable of proving control of the identifier(s) that will go into the certificate's CN or SANs. For example, a secure-boot style remote attestation MAY be capable of proving ownership of a hardware serial number, or a WebAuthn / FIDO / Passkey style remote attestation MAY be capable of proving control of a FIDO token belonging to a given username or email address.
-However, more typically the "rats" identifier serves to provide supplemental trustworthiness next to a direct proof-of-control identity challenge such as DNS-01 or HTTP-01.
+The "remote-attestation" identifier MAY appear as the only identifier type in the array, but only if the supported remote attestation type is capable of proving control of the identifier(s) that will go into the certificate's CN or SANs. For example, a measured-boot style remote attestation MAY be capable of proving ownership of a hardware serial number, or a WebAuthn / FIDO / Passkey style remote attestation MAY be capable of proving control of a FIDO token belonging to a given username or email address.
+However, more typically the "remote-attestation" identifier serves to provide supplemental trustworthiness next to a direct proof-of-control identity challenge such as DNS-01 or HTTP-01.
 
 
-In this example, a client is requesting a certificate for a `dns` identity `client01.finance.example` and offers that it can provide remote attestation of the secure-boot stack of the application server via the RATS identifier `"secure-boot"`, as well as provide remote attestation from the underlying cryptographic hardware holding the private key via the RATS identifier `"hsm"`. These values refer to the ACME Attest Properties Hint Registry defined in {{prophints}}.
+In this example, a client is requesting a certificate for a `dns` identity `client01.finance.example` and offers that it can provide remote attestation of the measured-boot stack of the application server via the remote-attestation identifier `"measured-boot"`, as well as provide remote attestation from the underlying cryptographic hardware holding the private key via the remote-attestation identifier `"hsm"`. These values refer to the ACME Attest Properties Hint Registry defined in {{prophints}}.
 
 An example extended newOrder JWS request:
 
@@ -278,43 +276,18 @@ An example extended Order Object that includes confirmation that this order will
   }
 ~~~~~~~~~~
 
-EDNOTE: as attestation becomes more complicated, the server might want to prompt for more than one attestation -- for example it might want both attestation of secure boot of the application server, and attestation of the key in the HSM. I suggest that the server is allowed to use the value of the "trustworthy" identifier as a free-form text field to request multiple attestations.
-
-For example, this should be valid:
-
-```
-    "identifiers": [
-      { "type": "trustworthy", "value": "trustworthy-01" },
-      { "type": "trustworthy", "value": "trustworthy-02" },
-      { "type": "dns",         "value": "client01.finance.example" },
-    ],
-```
-
-or this:
-
-```
-    "identifiers": [
-      { "type": "trustworthy", "value": "platform" },
-      { "type": "trustworthy", "value": "key" },
-      { "type": "dns",         "value": "client01.finance.example" },
-    ],
-```
-
-This could be how we sneak in that ACME Claims Hint thing; like the registry that we're trying to create in {{claimshints}} below could be carried in the value field of our dummy identifier.
-
-
-The server is not required to match the list of RATS identifiers provided by the client. The server MAY challenge for a subset of the RATS identifiers offered by the client, or it MAY challenge for RATS identifiers that were not offered by the client. The server has full discretion for deciding what properties are required to be attested for the requested certificate profile.
+The server is not required to match the list of remote-attestation identifiers provided by the client. The server MAY challenge for a subset of the remote-attestation identifiers offered by the client, or it MAY challenge for remote-attestation identifiers that were not offered by the client. The server has full discretion for deciding what properties are required to be attested for the requested certificate profile.
 
 
 ## Step 3: Authorization Object
 
 The Client MUST complete the authorizations provided by the server, but it MAY do so in any order {{!RFC8555}}.
 
-In this example, the Server has created an Authorization Object for the "rats" and "dns" identifiers.
+In this example, the Server has created an Authorization Object for the "remote-attestation" and "dns" identifiers.
 The client accesses each authorization object from the URLs given in the Order Object.
 In this example, the `PAniVnsZcis` authorization relates to the `dns` identifier, and
 it is not changed from {{RFC8555, Section 8}}.
-The `C1uq5Dr+x8GSEJTSKW5B` authorization corresponds to the RATS "secure-boot" identifier.
+The `C1uq5Dr+x8GSEJTSKW5B` authorization corresponds to the remote-attestation "measured-boot" identifier.
 
 Here is an example `remote-attest-01` challenge:
 
@@ -340,7 +313,7 @@ Here is an example `remote-attest-01` challenge:
          "status": "pending",
          "freshness_nonce": "yoW1RL2zPBzYEHBQ06Jy",
          "attestClaimsHint": ["hwmodel", "swversion", "submods", "manifests",],
-         "verifierEncryptionCredential": "https://example.com/acme/rats-encr-keys/_fyg_W85yTul8zDPygcIgKmj-xA",
+         "verifierEncryptionCredential": "https://example.com/acme/ra-encr-keys/_fyg_W85yTul8zDPygcIgKmj-xA",
        }
      ],
    }
@@ -504,7 +477,7 @@ Type: designated expert
 
 The registry has the following columns:
 
-- Property Hint: the string value to be placed within an ACME identifier of type "rats".
+- Property Hint: the string value to be placed within an ACME identifier of type "remote-attestation".
 - Description: a description of the general property which the client is expected to attest.
 
 The initial registry contents is shown in the table below.
@@ -513,7 +486,7 @@ The initial registry contents is shown in the table below.
 |------------------|------------------------------|
 | ""               | Empty string. Indicates client support for, or a server request for, attestation without being specific about what type. Typically this means the client will produce whatever remote attestation data it is capable of. |
 | "hsm"            | Attestation that the private key associated with this certificate request is stored in cryptographic hardware such as a TPM or PKCS#11 HSM. In the case of PKCS#11 HSMs, the attestation SHOULD contain the PKCs#11 properties of the private key storage, as well as an indication of whether the cryptographic module is operating in FIPS mode. |
-| "measured_boot"    | Attestation from the device's onboard secure-boot stack of the device running the application. |
+| "measured_boot"    | Attestation from the device's onboard measured-boot stack of the device running the application. |
 | "os_patch_level" | Attestation to the version or patch level of the device's operating system.             |
 | "sw_manifest"    | A manifest list of all software currently running on the device.                        |
 | "fido2"          | A request for FIDO2-based user authentication; maybe this is to validate a user identifier directly against the FIDO2 data, or maybe this serves as a second-factor to the CA's certificate pickup flow. |
