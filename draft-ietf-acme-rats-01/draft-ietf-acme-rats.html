@@ -4,32 +4,33 @@
 <meta charset="utf-8">
 <meta content="Common,Latin" name="scripts">
 <meta content="initial-scale=1.0" name="viewport">
-<title>Automated Certificate Management Environment (ACME) rats Identifier and Challenge Type</title>
+<title>Automated Certificate Management Environment (ACME) Remote Attestation Identifier and Challenge Type</title>
 <meta content="Chunchi Peter Liu" name="author">
 <meta content="Mike Ounsworth" name="author">
 <meta content="Michael Richardson" name="author">
 <meta content="
-       This document describes an approach where an ACME Server can challenge an ACME Client to provide a Remote Attestation Evidence or Remote Attestation Result in any format supported by the Conceptual Message Wrapper. 
+       This document describes an approach where an ACME Server can challenge an ACME Client to provide Evidence, Endorsements, or Attestation Result according to the Remote ATtestation procedureS (RATS) framework in any format supported by the Conceptual Message Wrapper (CMW). 
        The ACME Server can optionally challenge the Client for specific claims that it wishes attestation for. 
     " name="description">
-<meta content="xml2rfc 3.31.0" name="generator">
+<meta content="xml2rfc 3.34.0" name="generator">
 <meta content="ACME" name="keyword">
-<meta content="RATS" name="keyword">
+<meta content="Remote Attestation" name="keyword">
 <meta content="Zero Trust" name="keyword">
 <meta content="draft-ietf-acme-rats-latest" name="ietf.draft">
 <!-- Generator version information:
-  xml2rfc 3.31.0
-    Python 3.12.12
-    ConfigArgParse 1.7
+  xml2rfc 3.34.0
+    Python 3.14.7
+    ConfigArgParse 1.7.5
     google-i18n-address 3.1.1
-    intervaltree 3.1.0
+    intervaltree 3.2.1
     Jinja2 3.1.6
-    lxml 6.0.2
-    platformdirs 4.5.1
+    lxml 6.1.1
+    natsort 8.4.0
+    platformdirs 4.11.7
     pycountry 24.6.1
     PyYAML 6.0.3
-    requests 2.32.5
-    wcwidth 0.2.14
+    requests 2.33.1
+    wcwidth 0.8.3
 -->
 <link href="draft-ietf-acme-rats.xml" rel="alternate" type="application/rfc+xml">
 <link href="#copyright" rel="license">
@@ -65,7 +66,6 @@
   src: local('Lora Italic'), local('Lora-Italic'), url('https://martinthomson.github.io/rfc-css/fonts/lora-italic-latin-ext.woff2') format('woff2');
   unicode-range: U+0100-024F, U+0259, U+1E00-1EFF, U+2020, U+20A0-20AB, U+20AD-20CF, U+2113, U+2C60-2C7F, U+A720-A7FF;
 }
-
 @font-face {
   font-family: 'Lora';
   font-style: italic;
@@ -114,7 +114,6 @@
   src: local('Lora Regular'), local('Lora-Regular'), url('https://martinthomson.github.io/rfc-css/fonts/lora-regular-latin.woff2') format('woff2');
   unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+2000-206F, U+2074, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
 }
-
 @font-face {
   font-family: 'Lora';
   font-style: normal;
@@ -170,7 +169,7 @@
   font-weight: 400;
   font-display: swap;
   src: local('Oxygen Mono'), local('OxygenMono-Regular'), url('https://martinthomson.github.io/rfc-css/fonts/oxygenmono-regular-latin-ext.woff2') format('woff2');
-  unicode-range: U+0100-024F, U+0259, U+1E00-1EFF, U+2020, U+20A0-20AB, U+20AD-20CF, U+2113, U+2C60-2C7F, U+A720-A7FF;
+  unicode-range: U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7, U+02DD-02FF, U+0304, U+0308, U+0329, U+1D00-1DBF, U+1E00-1E9F, U+1EF2-1EFF, U+2020, U+20A0-20AB, U+20AD-20C0, U+2113, U+2C60-2C7F, U+A720-A7FF;
 }
 @font-face {
   font-family: 'Oxygen Mono';
@@ -178,7 +177,7 @@
   font-weight: 400;
   font-display: swap;
   src: local('Oxygen Mono'), local('OxygenMono-Regular'), url('https://martinthomson.github.io/rfc-css/fonts/oxygenmono-regular-latin.woff2') format('woff2');
-  unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+2000-206F, U+2074, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
+  unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
 }
 
 @font-face {
@@ -295,16 +294,19 @@ h1, h2, h3, h4, h5, h6 {
   font-size-adjust: 0.5;
   color: var(--title-color);
 }
-h1#title {
-  font-size: 32px;
-  line-height: 40px;
-  clear: both;
-}
-h1#title, h1#rfcnum {
-  margin: 1.5em 0 0.2em;
-}
-h1#rfcnum + h1#title {
-  margin: 0.2em 0;
+h1 {
+  &#title {
+    font-size: 32px;
+    line-height: 40px;
+    clear: both;
+    margin: 1.5em 0 0.2em;
+  }
+  &#rfcnum {
+    margin: 1.5em 0 0.2em;
+    & + h1#title {
+      margin: 0.2em 0;
+    }
+  }
 }
 
 h1, h2, h3 {
@@ -324,10 +326,10 @@ h4, h5, h6 {
 #abstract+p {
   font-size: 18px;
   line-height: 24px;
-}
-#abstract+p code, #abstract+p samp, #abstract+p tt {
-  font-size: 16px;
-  line-height: 0;
+  & code, & samp, & tt {
+    font-size: 16px;
+    line-height: 0;
+  }
 }
 
 p {
@@ -338,59 +340,59 @@ p {
 div {
   margin: 0;
 }
-.alignRight.art-text {
-  background-color: var(--highlight-color);
-  border: 1px solid var(--line-color);
-  border-radius: 3px;
-  padding: 0.5em 1em 0;
-  margin-bottom: 0.5em;
-}
-.alignRight.art-text pre {
-  padding: 0;
-  width: auto;
-}
 .alignRight {
   margin: 1em 0;
-}
-.alignRight > *:first-child {
-  border: none;
-  margin: 0;
-  float: right;
-  clear: both;
-}
-.alignRight > *:nth-child(2) {
-  clear: both;
-  display: block;
-  border: none;
+  &.art-text {
+    background-color: var(--highlight-color);
+    border: 1px solid var(--line-color);
+    border-radius: 3px;
+    padding: 0.5em 1em 0;
+    margin-bottom: 0.5em;
+    & pre {
+      padding: 0;
+      width: auto;
+    }
+  }
+  & > *:first-child {
+    border: none;
+    margin: 0;
+    float: right;
+    clear: both;
+  }
+  & > *:nth-child(2) {
+    clear: both;
+    display: block;
+    border: none;
+  }
 }
 svg {
   display: block;
-}
-/* font-family isn't space-separated, but =~ will have to do */
-svg[font-family~="monospace" i], svg [font-family~="monospace" i] {
-  font-family: var(--font-mono);
-}
-.alignCenter.art-text {
-  background-color: var(--highlight-color);
-  border: 1px solid var(--line-color);
-  border-radius: 3px;
-  padding: 0.5em 1em 0;
-  margin-bottom: 0.5em;
-}
-.alignCenter.art-text pre {
-  padding: 0;
-  width: auto;
+  /* font-family isn't space-separated, but =~ will have to do */
+  &[font-family~="monospace" i], & [font-family~="monospace" i] {
+    font-family: var(--font-mono);
+  }
 }
 .alignCenter {
   margin: 1em 0;
-}
-.alignCenter > *:first-child {
-  border: none;
-  /* this isn't optimal, but it's an existence proof.  PrinceXML doesn't
-     support flexbox yet.
-  */
-  display: table;
-  margin: 0 auto;
+  &.art-text {
+    background-color: var(--highlight-color);
+    border: 1px solid var(--line-color);
+    border-radius: 3px;
+    padding: 0.5em 1em 0;
+    margin-bottom: 0.5em;
+    & pre {
+      padding: 0;
+      width: auto;
+    }
+  }
+  & > *:first-child {
+    border: none;
+    /* this isn't optimal, but it's an existence proof.  PrinceXML doesn't
+       support flexbox yet.
+    */
+    display: table;
+    margin: 0 auto;
+  }
 }
 
 /* lists */
@@ -428,26 +430,25 @@ dl {
     --indent: 5ch;
     & > dt {
       min-width: calc(var(--indent) - 2ch);
+      float: none;
     }
-  }
-  &.olPercent > dt {
-    float: none;
   }
 
   dl > dd > & {
     margin-top: 0.5em;
     margin-bottom: 0;
   }
-}
-dl:not(.dlNewline) > dt {
-  float: left;
-  margin-right: 2ch;
-  min-width: 8ch;
-}
-dl > dd {
-  margin-bottom: .8em;
-  margin-left: var(--indent) !important; /* stupid element overrides */
-  min-height: 2ex;
+
+  &:not(.dlNewline) > dt {
+    float: left;
+    margin-right: 2ch;
+    min-width: 8ch;
+  }
+  & > dd {
+    margin-bottom: .8em;
+    margin-left: var(--indent) !important; /* stupid element overrides */
+    min-height: 2ex;
+  }
 }
 :is(dl.compact, .dlCompact) > dd {
   margin-bottom: 0;
@@ -463,20 +464,22 @@ dl > dd {
 }
 
 /* links */
-a, a[href].selfRef:hover {
+a {
   text-decoration: none;
+  &[href] {
+    color: var(--link-color);
+    &:hover { text-decoration: underline; }
+    &.selfRef {
+      color: var(--text-color);
+      &:hover {
+        text-decoration: none;
+        background-color: var(--highlight-color);
+      }
+    }
+  }
 }
-a[href] {
-  color: var(--link-color);
-}
-a[href].selfRef, .iref + a[href].internal {
+.iref + a[href].internal {
   color: var(--text-color);
-}
-a[href]:hover {
-  text-decoration: underline;
-}
-a[href].selfRef:hover {
-  background-color: var(--highlight-color);
 }
 a.xref:is(.cite, .auto), :is(#status-of-memo, #copyright) a {
   white-space: nowrap;
@@ -512,9 +515,9 @@ img {
 figure {
   margin: 0.5em 0;
   padding: 0;
-}
-figure blockquote {
-  margin: 0.8em 0.4em 0.4em;
+  & blockquote {
+    margin: 0.8em 0.4em 0.4em;
+  }
 }
 figcaption, caption {
   font-style: italic;
@@ -524,17 +527,19 @@ figcaption, caption {
 }
 @media screen {
   /* Auto-collapse boilerplate. */
-  :is(#status-of-memo, #copyright) p {
-    margin: -2px 0;
-    max-height: 0;
-    transition: max-height 2s ease, margin 0.5s ease 0.5s;
-    overflow: hidden;
-  }
-  :is(#status-of-memo, #copyright):hover p,
-  :is(#status-of-memo, #copyright) h2:target ~ p {
-    margin: 0.5em 0;
-    max-height: 500px;
-    overflow: auto;
+  :is(#status-of-memo, #copyright) {
+    & p {
+      margin: -2px 0;
+      max-height: 0;
+      transition: max-height 2s ease, margin 0.5s ease 0.5s;
+      overflow: hidden;
+    }
+    &:hover p,
+    & h2:target ~ p {
+      margin: 0.5em 0;
+      max-height: 500px;
+      overflow: auto;
+    }
   }
   pre, svg {
     display: inline-block;
@@ -570,6 +575,7 @@ aside, blockquote {
 }
 blockquote {
   margin: 1em 0;
+  border-left: 2px var(--pilcrow-strong) solid;
 }
 cite {
   display: block;
@@ -583,25 +589,17 @@ table {
   max-width: 100%;
   margin: 0 0 1em;
   border-collapse: collapse;
-}
-table.right {
-  margin-left: auto;
-}
-table.center {
-  margin-left: auto;
-  margin-right: auto;
-}
-table.left {
-  margin-right: auto;
-}
-table .text-left {
-  text-align: left;
-}
-table .text-center {
-  text-align: center;
-}
-table .text-right {
-  text-align: right;
+  &.right { margin-left: auto; }
+  &.center { margin-left: auto; margin-right: auto; }
+  &.left { margin-right: auto; }
+  & .text-left { text-align: left; }
+  & .text-center { text-align: center; }
+  & .text-right { text-align: right; }
+  & caption {
+    margin: 0;
+    padding: 3px 0 3px 1em;
+  }
+  & p { margin: 0; }
 }
 
 thead, tbody {
@@ -621,13 +619,6 @@ th {
 :is(tr:nth-child(2n+1), thead+tbody > tr:nth-child(2n)) > td {
   background-color: var(--highlight-color);
 }
-table caption {
-  margin: 0;
-  padding: 3px 0 3px 1em;
-}
-table p {
-  margin: 0;
-}
 
 /* pilcrow */
 a.pilcrow {
@@ -638,18 +629,16 @@ a.pilcrow {
     color: var(--pilcrow-weak);
     &:hover { text-decoration: none; }
   }
-}
-@media not print {
-  :hover > a.pilcrow {
-    opacity: 1;
+  @media not print {
+    :hover > &, &:focus {
+      opacity: 1;
+    }
+    &[href]:hover {
+      color: var(--pilcrow-strong);
+      background-color: transparent;
+    }
   }
-  a.pilcrow[href]:hover {
-    color: var(--pilcrow-strong);
-    background-color: transparent;
-  }
-}
-@media print {
-  a.pilcrow {
+  @media print {
     display: none;
   }
 }
@@ -708,9 +697,9 @@ sub, sup {
   font-size: 0.9em;
   font-style: italic;
   margin-top: 2em;
-}
-.docInfo .prepared {
-  float: right;
+  & .prepared {
+    float: right;
+  }
 }
 
 /* table of contents */
@@ -800,23 +789,27 @@ hr.addr {
   max-width: calc(100% - 16px);
 }
 @media (min-width: 500px) {
-  #authors-addresses > section {
-    column-count: 2;
-    column-gap: 20px;
-  }
-  #authors-addresses > section > h2 {
-    column-span: all;
-  }
-  /* hack for break-inside: avoid-column */
-  #authors-addresses address {
-    display: inline-block;
-    break-inside: avoid-column;
+  #authors-addresses {
+    & > section {
+      column-count: 2;
+      column-gap: 20px;
+    }
+    & > section > h2 {
+      column-span: all;
+    }
+    /* hack for break-inside: avoid-column */
+    & address {
+      display: inline-block;
+      break-inside: avoid-column;
+    }
   }
 }
 
 /* Comments */
-.rfcEditorRemove p:first-of-type {
-  font-style: italic;
+.rfcEditorRemove {
+  & p:first-of-type {
+    font-style: italic;
+  }
 }
 .cref {
   background-color: rgba(249, 232, 105, 0.3);
@@ -827,19 +820,21 @@ hr.addr {
 }
 
 @media screen {
-  #toc nav {
-    font-family: var(--font-title);
-    font-weight: 360;
-    & > ul { margin-bottom: 2em; }
-    & ul {
-      margin: 0 0 0 4px;
-      & :is(p, li) {
-        margin: 2px 0;
+  #toc {
+    & nav {
+      font-family: var(--font-title);
+      font-weight: 360;
+      & > ul { margin-bottom: 2em; }
+      & ul {
+        margin: 0 0 0 4px;
+        & :is(p, li) {
+          margin: 2px 0;
+        }
       }
     }
-  }
-  #toc a.toplink {
-    float: right;
+    & a.toplink {
+      float: right;
+    }
   }
 }
 @media not screen {
@@ -860,54 +855,54 @@ hr.addr {
     margin: 0;
     border-bottom: 1px solid #ccc;
     opacity: 0.6;
-  }
-  #toc h2 {
-    margin: 0;
-    padding: 2px 0 2px 6px;
-    padding-right: 1em;
-    font-size: 18px;
-    line-height: 24px;
-    min-width: 190px;
-    text-align: right;
-    background-color: #444;
-    color: white;
-    cursor: pointer;
-    &::before { /* css hamburger */
-      float: right;
-      position: relative;
-      width: 1em;
-      height: 1px;
-      left: -164px;
-      margin: 8px 0 0 0;
-      background: white none repeat scroll 0 0;
-      box-shadow: 0 4px 0 0 white, 0 8px 0 0 white;
-      content: "";
+    & h2 {
+      margin: 0;
+      padding: 2px 0 2px 6px;
+      padding-right: 1em;
+      font-size: 18px;
+      line-height: 24px;
+      min-width: 190px;
+      text-align: right;
+      background-color: #444;
+      color: white;
+      cursor: pointer;
+      &::before { /* css hamburger */
+        float: right;
+        position: relative;
+        width: 1em;
+        height: 1px;
+        left: -164px;
+        margin: 8px 0 0 0;
+        background: white none repeat scroll 0 0;
+        box-shadow: 0 4px 0 0 white, 0 8px 0 0 white;
+        content: "";
+      }
     }
-  }
-  #toc nav {
-    display: none;
-    background-color: var(--background-color);
-    padding: 0.5em 1em 1em;
-    overflow: auto;
-    overscroll-behavior: contain;
-    height: calc(100vh - 48px);
-    border-left: 1px solid #ddd;
-  }
-  #toc.active {
-    opacity: 1;
-    & nav { display: block; }
-  }
-  /* Make the collapsed ToC header render white on gray also when it's a link */
-  #toc h2 a,
-  #toc h2 a:is(:link, :focus, :hover),
-  #toc a.toplink,
-  #toc a.toplink:hover {
-    color: white;
-    background-color: #444;
-    text-decoration: none;
-  }
-  #toc a.toplink {
-    margin: 2px 0.5em 0;
+    & nav {
+      display: none;
+      background-color: var(--background-color);
+      padding: 0.5em 1em 1em;
+      overflow: auto;
+      overscroll-behavior: contain;
+      height: calc(100vh - 48px);
+      border-left: 1px solid #ddd;
+    }
+    &.active {
+      opacity: 1;
+      & nav { display: block; }
+    }
+    /* Make the collapsed ToC header render white on gray also when it's a link */
+    & h2 a,
+    & h2 a:is(:link, :focus, :hover),
+    & a.toplink,
+    & a.toplink:hover {
+      color: white;
+      background-color: #444;
+      text-decoration: none;
+    }
+    & a.toplink {
+      margin: 2px 0.5em 0;
+    }
   }
 }
 
@@ -926,26 +921,26 @@ hr.addr {
     margin: 0;
     padding: 0;
     z-index: 1;
-  }
-  #toc h2 {
-    margin: 0;
-    padding: 0.25em 1em 1em 0;
-  }
-  #toc nav {
-    display: block;
-    height: calc(90vh - 84px);
-    bottom: 0;
-    padding: 0.5em 0 2em;
-    overflow: auto;
-    overscroll-behavior: contain;
-    scrollbar-width: thin;
+    & h2 {
+      margin: 0;
+      padding: 0.25em 1em 1em 0;
+    }
+    & nav {
+      display: block;
+      height: calc(90vh - 84px);
+      bottom: 0;
+      padding: 0.5em 0 2em;
+      overflow: auto;
+      overscroll-behavior: contain;
+      scrollbar-width: thin;
+    }
+    & a.toplink {
+      margin: 8px 0.5em 0;
+    }
   }
   img { /* future proofing */
     max-width: 100%;
     height: auto;
-  }
-  #toc a.toplink {
-    margin: 8px 0.5em 0;
   }
 }
 
@@ -961,12 +956,13 @@ hr.addr {
   #n-copyright-notice {
     border-bottom: none;
   }
-  #toc, #n-introduction {
-    page-break-before: always;
-  }
   #toc {
+    page-break-before: always;
     border-top: none;
     padding-top: 0;
+  }
+  #n-introduction {
+    page-break-before: always;
   }
   figure, pre, .vcard {
     page-break-inside: avoid;
@@ -1028,17 +1024,19 @@ hr.addr {
 }
 
 /* SVG Trick: a prefix match works because only black and white are allowed */
-svg :is([stroke="black"], [stroke^="#000"]) {
-  stroke: var(--text-color);
-}
-svg :is([stroke="white"], [stroke^="#fff"]) {
-  stroke: var(--background-color);
-}
-svg :is([fill="black"], [fill^="#000"], :not([fill])) {
-  fill: var(--text-color);
-}
-svg :is([fill="white"], [fill^="#fff"]) {
-  fill: var(--background-color);
+svg {
+  & :is([stroke="black"], [stroke^="#000"]) {
+    stroke: var(--text-color);
+  }
+  & :is([stroke="white"], [stroke^="#fff"]) {
+    stroke: var(--background-color);
+  }
+  & :is([fill="black"], [fill^="#000"], :not([fill])) {
+    fill: var(--text-color);
+  }
+  & :is([fill="white"], [fill^="#fff"]) {
+    fill: var(--background-color);
+  }
 }
 </style>
 
@@ -1048,11 +1046,11 @@ svg :is([fill="white"], [fill^="#fff"]) {
 <thead><tr>
 <td class="left">Internet-Draft</td>
 <td class="center">acme-rats</td>
-<td class="right">December 2025</td>
+<td class="right">September 2026</td>
 </tr></thead>
 <tfoot><tr>
 <td class="left">Liu, et al.</td>
-<td class="center">Expires 24 June 2026</td>
+<td class="center">Expires 7 March 2027</td>
 <td class="right">[Page]</td>
 </tr></tfoot>
 </table>
@@ -1065,12 +1063,12 @@ svg :is([fill="white"], [fill^="#fff"]) {
 <dd class="internet-draft">draft-ietf-acme-rats-latest</dd>
 <dt class="label-published">Published:</dt>
 <dd class="published">
-<time datetime="2025-12-21" class="published">21 December 2025</time>
+<time datetime="2026-09-03" class="published">3 September 2026</time>
     </dd>
 <dt class="label-intended-status">Intended Status:</dt>
 <dd class="intended-status">Standards Track</dd>
 <dt class="label-expires">Expires:</dt>
-<dd class="expires"><time datetime="2026-06-24">24 June 2026</time></dd>
+<dd class="expires"><time datetime="2027-03-07">7 March 2027</time></dd>
 <dt class="label-authors">Authors:</dt>
 <dd class="authors">
 <div class="author">
@@ -1079,6 +1077,7 @@ svg :is([fill="white"], [fill^="#fff"]) {
 </div>
 <div class="author">
       <div class="author-name">M. Ounsworth</div>
+<div class="org">Cryptic Forest Software, Ltd</div>
 </div>
 <div class="author">
       <div class="author-name">M. Richardson</div>
@@ -1087,10 +1086,10 @@ svg :is([fill="white"], [fill^="#fff"]) {
 </dd>
 </dl>
 </div>
-<h1 id="title">Automated Certificate Management Environment (ACME) rats Identifier and Challenge Type</h1>
+<h1 id="title">Automated Certificate Management Environment (ACME) Remote Attestation Identifier and Challenge Type</h1>
 <section id="section-abstract">
       <h2 id="abstract"><a href="#abstract" class="selfRef">Abstract</a></h2>
-<p id="section-abstract-1">This document describes an approach where an ACME Server can challenge an ACME Client to provide a Remote Attestation Evidence or Remote Attestation Result in any format supported by the Conceptual Message Wrapper.<a href="#section-abstract-1" class="pilcrow">¶</a></p>
+<p id="section-abstract-1">This document describes an approach where an ACME Server can challenge an ACME Client to provide Evidence, Endorsements, or Attestation Result according to the Remote ATtestation procedureS (RATS) framework in any format supported by the Conceptual Message Wrapper (CMW).<a href="#section-abstract-1" class="pilcrow">¶</a></p>
 <p id="section-abstract-2">The ACME Server can optionally challenge the Client for specific claims that it wishes attestation for.<a href="#section-abstract-2" class="pilcrow">¶</a></p>
 </section>
 <section class="note rfcEditorRemove" id="section-note.1">
@@ -1128,7 +1127,7 @@ svg :is([fill="white"], [fill^="#fff"]) {
         time. It is inappropriate to use Internet-Drafts as reference
         material or to cite them other than as "work in progress."<a href="#section-boilerplate.1-3" class="pilcrow">¶</a></p>
 <p id="section-boilerplate.1-4">
-        This Internet-Draft will expire on 24 June 2026.<a href="#section-boilerplate.1-4" class="pilcrow">¶</a></p>
+        This Internet-Draft will expire on 7 March 2027.<a href="#section-boilerplate.1-4" class="pilcrow">¶</a></p>
 </section>
 </div>
 <div id="copyright">
@@ -1137,7 +1136,7 @@ svg :is([fill="white"], [fill^="#fff"]) {
 <a href="#name-copyright-notice" class="section-name selfRef">Copyright Notice</a>
         </h2>
 <p id="section-boilerplate.2-1">
-            Copyright (c) 2025 IETF Trust and the persons identified as the
+            Copyright (c) 2026 IETF Trust and the persons identified as the
             document authors. All rights reserved.<a href="#section-boilerplate.2-1" class="pilcrow">¶</a></p>
 <p id="section-boilerplate.2-2">
             This document is subject to BCP 78 and the IETF Trust's Legal
@@ -1161,7 +1160,7 @@ svg :is([fill="white"], [fill^="#fff"]) {
             <p id="section-toc.1-1.1.1" class="keepWithNext"><a href="#section-1" class="auto internal xref">1</a>.  <a href="#name-introduction" class="internal xref">Introduction</a></p>
 <ul class="compact toc ulBare ulEmpty">
 <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.1.2.1">
-                <p id="section-toc.1-1.1.2.1.1" class="keepWithNext"><a href="#section-1.1" class="auto internal xref">1.1</a>.  <a href="#name-attestation-results-only" class="internal xref">Attestation Results only</a></p>
+                <p id="section-toc.1-1.1.2.1.1" class="keepWithNext"><a href="#section-1.1" class="auto internal xref">1.1</a>.  <a href="#name-design-overview" class="internal xref">Design overview</a></p>
 </li>
               <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.1.2.2">
                 <p id="section-toc.1-1.1.2.2.1" class="keepWithNext"><a href="#section-1.2" class="auto internal xref">1.2</a>.  <a href="#name-related-work" class="internal xref">Related work</a></p>
@@ -1169,10 +1168,10 @@ svg :is([fill="white"], [fill^="#fff"]) {
             </ul>
 </li>
           <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.2">
-            <p id="section-toc.1-1.2.1"><a href="#section-2" class="auto internal xref">2</a>.  <a href="#name-acme-extensions" class="internal xref">ACME Extensions</a></p>
+            <p id="section-toc.1-1.2.1"><a href="#section-2" class="auto internal xref">2</a>.  <a href="#name-overview" class="internal xref">Overview</a></p>
 <ul class="compact toc ulBare ulEmpty">
 <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.2.2.1">
-                <p id="section-toc.1-1.2.2.1.1"><a href="#section-2.1" class="auto internal xref">2.1</a>.  <a href="#name-rats-identifier" class="internal xref">'rats' identifier</a></p>
+                <p id="section-toc.1-1.2.2.1.1"><a href="#section-2.1" class="auto internal xref">2.1</a>.  <a href="#name-remote-attestation-identifi" class="internal xref">'remote-attestation' identifier</a></p>
 </li>
               <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.2.2.2">
                 <p id="section-toc.1-1.2.2.2.1"><a href="#section-2.2" class="auto internal xref">2.2</a>.  <a href="#name-remote-attest-01-challenge" class="internal xref">remote-attest-01 Challenge</a></p>
@@ -1200,7 +1199,7 @@ svg :is([fill="white"], [fill^="#fff"]) {
                 <p id="section-toc.1-1.3.2.3.1"><a href="#section-3.3" class="auto internal xref">3.3</a>.  <a href="#name-step-3-authorization-object" class="internal xref">Step 3: Authorization Object</a></p>
 </li>
               <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.3.2.4">
-                <p id="section-toc.1-1.3.2.4.1"><a href="#section-3.4" class="auto internal xref">3.4</a>.  <a href="#name-step-4-respond-to-rats-chal" class="internal xref">Step 4: Respond to RATS Challenge</a></p>
+                <p id="section-toc.1-1.3.2.4.1"><a href="#section-3.4" class="auto internal xref">3.4</a>.  <a href="#name-step-4-respond-to-remote-at" class="internal xref">Step 4: Respond to Remote Attestation Challenge</a></p>
 </li>
               <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.3.2.5">
                 <p id="section-toc.1-1.3.2.5.1"><a href="#section-3.5" class="auto internal xref">3.5</a>.  <a href="#name-step-5-perform-other-challe" class="internal xref">Step 5: Perform other challenges</a></p>
@@ -1272,45 +1271,45 @@ When an ACME client needs a certificate, it connects to the ACME server, providi
 <p id="section-1-2">These identities become part of the certificate, usually a Fully Qualified Domain Name (FQDN) that goes into the Subject Alt Name (SAN) for a certificate.
 Prior to ACME, the authorization process of obtaining a certificate from an operator of a (public) certification authority was non-standard and ad-hoc.
 It ranged from sending faxes on company letterhead to answering an email sent to a well-known email address like <code>hostmaster@example.com</code>, evolving into a process where some randomized nonce could be placed in a particular place on the target web server.
-The point of this process is to prove that the given DNS FQDN was controlled by the client system.<a href="#section-1-2" class="pilcrow">¶</a></p>
-<p id="section-1-3">ACME standardized the process, allowing for automation for certificate issuance.
+The point of this process is to prove that the given DNS FQDN was controlled by the same client system initiating the certificate request.<a href="#section-1-2" class="pilcrow">¶</a></p>
+<p id="section-1-3">ACME standardized the process of proving domain control, allowing for full automation of certificate issuance.
 It has been a massive success: increasing HTTPS usage from 27% in 2013 to over 80% in 2019 <span>[<a href="#letsencrypt" class="cite xref">letsencrypt</a>]</span>.<a href="#section-1-3" class="pilcrow">¶</a></p>
-<p id="section-1-4">While the process supports many kinds of identifiers: email addresses, DTN node IDs, and can create certificates for client use.
-However, these combinations have not yet become as popular, in part because these types of certificates are usually located on much more general purpose systems such as laptops and computers used by people.<a href="#section-1-4" class="pilcrow">¶</a></p>
-<p id="section-1-5">The concern that Enterprises have with the use of client side certificates has been the trustworthiness of the client system itself.
-Such systems have many more configurations, and are often considered harder to secure as a result.
-While well managed mutual TLS (client and server authentication via PKIX certificate) has significant advantages over the more common login via username/passowrd,  if the private key associated with a client certificates is disclosed or lost, then the impact can be more significant.<a href="#section-1-5" class="pilcrow">¶</a></p>
-<p id="section-1-6">The use case envisioned here is that of an enterprise.  A Network Operations Center (NOC)
+<p id="section-1-4">While the ACME process supports many kinds of identifiers such as email addresses and DTN node IDs, and other client-type identifiers, ACME for client certificates has not yet become as popular, in part because these types of certificates are usually located on much more general purpose systems such as laptops and computers used by people in which there is no standardized automated way to perform proof of control.<a href="#section-1-4" class="pilcrow">¶</a></p>
+<p id="section-1-5">In addition to proving control of an identifier, a major concern that enterprises have with the use of client certificates has been the trustworthiness of the client system itself.
+Such systems have many more configurations, and are often harder to assess the security posture of as a result.
+While well managed mutual TLS (client and server authentication via PKIX certificate) has significant advantages over the more common login via username/password, if the private key associated with a client certificates is disclosed or lost, then the impact can be more significant.<a href="#section-1-5" class="pilcrow">¶</a></p>
+<p id="section-1-6">One use case envisioned here is that of client devices within an enterprise.  A Network Operations Center (NOC)
 (which may be internal or an external contracted entity) will issue (client) certificates to devices that can prove via remote attestation that they are running an up-to-date operating system as well as the enterprise-required endpoint security software.<a href="#section-1-6" class="pilcrow">¶</a></p>
-<p id="section-1-7">This is a place where Remote Attestation can offer additional assurance <span>[<a href="#RFC9334" class="cite xref">RFC9334</a>]</span>.
-If the software on the client is properly designed, and is up to date, then it is easier to assure that the private key will be safe.<a href="#section-1-7" class="pilcrow">¶</a></p>
-<p id="section-1-8">This can be extended to Bring Your Own Device (BYOD) by having those devices provide an equivalent Attestation Result.<a href="#section-1-8" class="pilcrow">¶</a></p>
-<p id="section-1-9">In this document, we propose an approach where ACME Server MAY challenge the ACME Client to produce an Attestation Evidence or Attestation Result in any format that is supported by the RATS Conceptual Message Wrapper <span>[<a href="#I-D.ietf-rats-msg-wrap" class="cite xref">I-D.ietf-rats-msg-wrap</a>]</span>, for instance, an EAT (entity attestation token).
-The ACME Server then verifies the attestation result against an appraisal policy as required by by the requested certificate profile.<a href="#section-1-9" class="pilcrow">¶</a></p>
+<p id="section-1-7">Another use case envisioned is issuance of server certificates, for example TLS certificates or code-signing certificates, where the Certification Authority (CA) requires, in addition to proof of control of the identifiers, some proof about the security posture of the operating environment, such as how the private key is stored, or the running environment of the server application.<a href="#section-1-7" class="pilcrow">¶</a></p>
+<p id="section-1-8">This is a place where Remote Attestation Procudures (RATS) <span>[<a href="#RFC9334" class="cite xref">RFC9334</a>]</span> can offer additional assurance.
+Remote Attestation provides a framework as well as an emerging ecosystem of standardized data formats and tools for a device to provide a remote peer with proof of various system properties in the form of measured evidence and third-party endorsements.
+ACME servers can leverage the Remote Attestation ecosystem either by directly consuming evidence and endorsements, or by having a third-party verifier assess the evidence and endorsements and produce an attestation result which is then provided to the ACME server.<a href="#section-1-8" class="pilcrow">¶</a></p>
+<p id="section-1-9">In this document, we propose an extension to the ACME protocol where ACME Server MAY challenge the ACME Client to produce an Attestation Evidence or Attestation Result in any format that is supported by the RATS Conceptual Message Wrapper <span>[<a href="#I-D.ietf-rats-msg-wrap" class="cite xref">I-D.ietf-rats-msg-wrap</a>]</span>, for instance, an EAT (entity attestation token).
+The ACME Server then verifies the attestation result against an appraisal policy as required by the requested certificate profile.
+Essentially, this provides a mechanism for the ACME server to challenge for and transport Remote Attestation data, but it leaves out-of-scope how the ACME server verifies the provided data according to its certificate profiles.
+Remote Attestation can in some cases provide proof of control of an identifier, such as a hardware serial number or a cryptographic public key, but in general Remote Attestation will be at a lower level than the identifier going into the certificate such as a FQDN or an email address.
+Therefore the design of this extension does not replace the identity challenges in the ACME protocol, but acts supplementally to it.<a href="#section-1-9" class="pilcrow">¶</a></p>
 <p id="section-1-10">ACME can presently offer certificates with multiple identities.
 Typically, in a server certificate situation, each identity represents a unique FQDN that would be placed into the certificate as distinct Subject Alt Names (SAN).
 For instance each of the names: example.com, www.example.com, www.example.net and marketing.example.com might be placed in a single certificate for a server that provides web content under those four names.<a href="#section-1-10" class="pilcrow">¶</a></p>
 <p id="section-1-11">This document defines a new identity type, <code>trustworthy</code> that the ACME client can ask for.
-A new <code>attestation-result-01</code> challenge is defined as a new method that can be used to authorize this identity using a RATS Passport model.
-The <code>attestation-evidence-02</code> challenge is also defined, enabling a background check mechanism.<a href="#section-1-11" class="pilcrow">¶</a></p>
-<p id="section-1-12">In this way, the Certification Authority (CA) or Registration Authority (RA) issues certificates only to devices that can provide an appropriate attestation result, indicating that the device from which the ACME request originates has passed the required security checks.<a href="#section-1-12" class="pilcrow">¶</a></p>
+A new <code>attestation-result-01</code> challenge is defined as a new method by which the ACME Server can challenge the Client to provide Remote Attestation according to the RATS Passport model.
+The <code>attestation-evidence-02</code> challenge is also defined, challenging the client to provide direct evidence according to the RATS Background Check model.
+In this way, the Certification Authority (CA) or Registration Authority (RA) issues certificates only to devices that can provide an appropriate attestation of the required properties / claims, indicating that the device from which the ACME request originates has passed the required security checks.<a href="#section-1-11" class="pilcrow">¶</a></p>
+<p id="section-1-12">The term "remote attestation" covers a broad range of standardized and proprietary technologies and data formats and this specification tries to be as technology-agnostic as possible. However, it assumes that evidence could contain sensitive data and therefore needs an optional payload encryption mechanism to keep this information protected as at passes through the various layers of the ACME server and RA to a RATS Verifier, whereas attestation results are assumed to be non-sensitive and therefore do not require this extra protection.<a href="#section-1-12" class="pilcrow">¶</a></p>
 <p id="section-1-13">Attested ACME requests can form an essential building block towards the continuous monitoring/validation requirement of Zero-Trust principle when coupled with other operational measures, such as issuing only short-lived certificates.<a href="#section-1-13" class="pilcrow">¶</a></p>
 <p id="section-1-14">For ease of denotion, we omit the "ACME" adjective from now on, where Server means ACME Server and Client means ACME Client.<a href="#section-1-14" class="pilcrow">¶</a></p>
-<div id="attestation-results-only">
+<div id="design-overview">
 <section id="section-1.1">
-        <h3 id="name-attestation-results-only">
-<a href="#section-1.1" class="section-number selfRef">1.1. </a><a href="#name-attestation-results-only" class="section-name selfRef">Attestation Results only</a>
+        <h3 id="name-design-overview">
+<a href="#section-1.1" class="section-number selfRef">1.1. </a><a href="#name-design-overview" class="section-name selfRef">Design overview</a>
         </h3>
-<p id="section-1.1-1">This document currently only defines the a mechanism to carry Attestation Results from the ACME client to the ACME server.
-It limits itself to the Passport model defined in <span>[<a href="#RFC9334" class="cite xref">RFC9334</a>]</span>.<a href="#section-1.1-1" class="pilcrow">¶</a></p>
-<p id="section-1.1-2">This is done to simplify the combinations, but also because it is likely that the Evidence required to make a reasonable assessment includes potentially privacy violating claims.
-This is particularly true when a device is a personal (BYOD) device; in that case the Verifier might not even be owned by the Enterprise,  but rather the device manufacturer.<a href="#section-1.1-2" class="pilcrow">¶</a></p>
-<p id="section-1.1-3">In order to make use of the background check that Evidence would need to be encrypted from the Attesting Environment to the Verifier, via the ACME Server -- the Relying Party.
-Secondly, in order for the ACME Server to be able to securely communicate with an Enterprise located Verifier with that Evidence, then more complex trust relationships would need to be established.
-Thirdly, the Enterprise Verifier system would then have to expose itself to the ACME Server, which may be located outside of the Enterprise.
-The ACME Server, for resiliency and loading reasons may be a numerous and dynamic cluster of systems, and providing appropriate network access controls to enable this communication may be difficult.<a href="#section-1.1-3" class="pilcrow">¶</a></p>
-<p id="section-1.1-4">Instead, the use of the Passport model allows all Evidence to remain within an Enterprise,
-and for Verifier operations to be more self-contained.<a href="#section-1.1-4" class="pilcrow">¶</a></p>
+<p id="section-1.1-1">Conceptually, the server is challenging the client to produce remote attestation as part of the certificate enrollment flow.
+However, this mechanism cannot be defined simply as an ACME challenge for a number of reasons.<a href="#section-1.1-1" class="pilcrow">¶</a></p>
+<p id="section-1.1-2">First, the ACME protocol <span>[<a href="#RFC8555" class="cite xref">RFC8555</a>]</span> is designed such that a client requests a given identifier to appear in the certificate, and the server provides a list of proof-of-control challenges such as {DNS-01, HTTP-01} to which the client only needs to respond to one. The design goal here is that the remote attestation challenge supplements the identifier challenges rather than replaces them. Instead we want the behavior that the client must respond to one of {DNS-01, HTTP-01} and also provide remote attestation of the given list of attestable properties.<a href="#section-1.1-2" class="pilcrow">¶</a></p>
+<p id="section-1.1-3">Second, an ACME client can request multiple identifiers in a single certificate request and so ACME challenges are per identifier. By contrast, remote attestation typically applies to the entire client device or private key and is not coupled to the requested identifiers.<a href="#section-1.1-3" class="pilcrow">¶</a></p>
+<p id="section-1.1-4">Consider an example where a Client requests a certificate for the DNS name "client01.finance.example" and the Server wants to respond that the client can fulfill either a DNS-01 or an HTTP-01 Challenge to prove ownership of that DNS same, and also the Client must provide two separate types of remote attestation, one measuring the boot stack and device integrity where the application runs, and a separate attestation proving that the subject private key is in an HSM. The desired behavior is {DNS-01 OR HTTP-01} AND measured-boot AND hsm. The only way for the Server to issue four Challenges in ACME that behave this way is to issue the DNS-01 and HTTP-01 under the same Identifier, and the measured-boot and hsm Challenges each under their own Identifier. To achieve this, <a href="#sec-identifier" class="auto internal xref">Section 2.1</a> introduces a new ACME Identifier type "remote-attestation" which is not really an identifier, but instead conveys the general type of attestation required.<a href="#section-1.1-4" class="pilcrow">¶</a></p>
+<p id="section-1.1-5">EDNOTE: there will be cases where the attestation does act as proof-of-control of an identifier, such as validating a Serial Number DN component. So do we want to allow <code>attestation-result-01</code> and <code>attestation-evidence-01</code> to be used within any identifier so that you can say DNS-01 or HTTP-01 or remote-attestation for cases where that makes sense?<a href="#section-1.1-5" class="pilcrow">¶</a></p>
 </section>
 </div>
 <div id="related-work">
@@ -1318,28 +1317,25 @@ and for Verifier operations to be more self-contained.<a href="#section-1.1-4" c
         <h3 id="name-related-work">
 <a href="#section-1.2" class="section-number selfRef">1.2. </a><a href="#name-related-work" class="section-name selfRef">Related work</a>
         </h3>
-<p id="section-1.2-1"><span>[<a href="#CSRATT" class="cite xref">CSRATT</a>]</span> define trustworthy claims about the physical storage location of a key pair's private key.
-This mechanism only relates to how the private key is kept.
-It does not provide any claim about the rest of the mechanisms around access to the key.
-A key could well be stored in the most secure way imaginable, but in order to use the key some command mechanism must exist to invoke it.<a href="#section-1.2-1" class="pilcrow">¶</a></p>
-<p id="section-1.2-2">The mechanism created in this document allows certification authority to access the trustworthiness of the entire system.
-That accessment goes well beyond how and where the private key is stored.
-ACME uses Certificate Signing Requests, so there is no reason that <span>[<a href="#CSRATT" class="cite xref">CSRATT</a>]</span> could not be combined with the mechanism described in this document.<a href="#section-1.2-2" class="pilcrow">¶</a></p>
+<p id="section-1.2-1">TODO: need a compare &amp; contrast with draft-ietf-acme-device-attest. @Ganesh, you're an author on both, could you write this text?<a href="#section-1.2-1" class="pilcrow">¶</a></p>
+<p id="section-1.2-2"><span>[<a href="#CSRATT" class="cite xref">CSRATT</a>]</span> define a mechanism for carrying arbitrary remote attestation data within a certificate signing request (CSR) object (PKCS#10 or CRMF). Since ACME internally uses PKCS#10 CSRs, this provides an alternate mechanism for carrying remote attestation within ACME.
+This specification provides additional functionality that cannot be achieved via attested CSRs, namely giving the ACME server a way to challenge the client not only for attestation, for for attestation of specific properties. It also decouples the attestation from the CSR, which future-proofs this mechanism in case CSR is removed as a mandatory part of the ACME protocol at some future time.
+That said, there is no reason that <span>[<a href="#CSRATT" class="cite xref">CSRATT</a>]</span> could not be combined with the mechanism described in this document; for example a client could provide an attested CSR proving protection properties of the private key within an HSM, and also respond to an ACME remote attestation challenge proving the security posture of the application stack.<a href="#section-1.2-2" class="pilcrow">¶</a></p>
 <p id="section-1.2-3"><span>[<a href="#RATSPA" class="cite xref">RATSPA</a>]</span> defines a summary of a local assessment of posture for managed systems and across various  layers.
 The claims and mechanisms defined in <span>[<a href="#RATSPA" class="cite xref">RATSPA</a>]</span> are a good basis for the assessment that will need to be done in order to satisfy the trustworthiness challenge detailed in this document.<a href="#section-1.2-3" class="pilcrow">¶</a></p>
 </section>
 </div>
 </section>
 </div>
-<div id="acme-extensions">
+<div id="overview">
 <section id="section-2">
-      <h2 id="name-acme-extensions">
-<a href="#section-2" class="section-number selfRef">2. </a><a href="#name-acme-extensions" class="section-name selfRef">ACME Extensions</a>
+      <h2 id="name-overview">
+<a href="#section-2" class="section-number selfRef">2. </a><a href="#name-overview" class="section-name selfRef">Overview</a>
       </h2>
-<div id="rats-identifier">
+<div id="sec-identifier">
 <section id="section-2.1">
-        <h3 id="name-rats-identifier">
-<a href="#section-2.1" class="section-number selfRef">2.1. </a><a href="#name-rats-identifier" class="section-name selfRef">'rats' identifier</a>
+        <h3 id="name-remote-attestation-identifi">
+<a href="#section-2.1" class="section-number selfRef">2.1. </a><a href="#name-remote-attestation-identifi" class="section-name selfRef">'remote-attestation' identifier</a>
         </h3>
 <p id="section-2.1-1">A new identifier type to indicate client support or server request for remote attestation.
 This is a "dummy" identifier in that the <code>value</code> does not contain an actual identifier, but instead a property that is the be remotely attested.
@@ -1347,7 +1343,7 @@ The <code>value</code> MAY be left empty, or contain a property hint as per <a h
 <span class="break"></span><dl class="dlParallel" id="section-2.1-2">
           <dt id="section-2.1-2.1">type (required, string):</dt>
           <dd style="margin-left: 1.5em" id="section-2.1-2.2">
-            <p id="section-2.1-2.2.1">The string "rats".<a href="#section-2.1-2.2.1" class="pilcrow">¶</a></p>
+            <p id="section-2.1-2.2.1">The string "remote-attestation".<a href="#section-2.1-2.2.1" class="pilcrow">¶</a></p>
 </dd>
           <dd class="break"></dd>
 <dt id="section-2.1-2.3">value (required, string):</dt>
@@ -1356,8 +1352,9 @@ The <code>value</code> MAY be left empty, or contain a property hint as per <a h
 </dd>
         <dd class="break"></dd>
 </dl>
-<p id="section-2.1-3">A Server MAY issue challenges for multiple "rats" identifiers in the same ACME protocol flow.<a href="#section-2.1-3" class="pilcrow">¶</a></p>
-<p id="section-2.1-4">The Client MUST complete the challenge by returning a CMW <span>[<a href="#I-D.ietf-rats-msg-wrap" class="cite xref">I-D.ietf-rats-msg-wrap</a>]</span> which MAY contain remote attestation data in any format (EAT (cite), WebAuthn (cite), TPM attest_certify (cite), PKIXKeyAttesation (cite), proprietary, etc), and of any RATS conceptual message type (evidence, endorsement, or attestation result). This document does not remove the need for vendors to perform interoperability testing with CAs to ensure compatibility.<a href="#section-2.1-4" class="pilcrow">¶</a></p>
+<p id="section-2.1-3">A Client MAY advertize support for multiple "remote-attestation" identifiers in the same ACME protocol flow.<a href="#section-2.1-3" class="pilcrow">¶</a></p>
+<p id="section-2.1-4">A Server MAY issue challenges for multiple "remote-attestation" identifiers in the same ACME protocol flow. As the Server is authoritative for the requirements to be fulfilled for the given certificate request, the Server MAY choose not to issue a Challenge for every "remote-attestation" identifier type that the Client advertized support for, and conversely, the Server MAY issue a challenge for "remote-attestation" identifiers that the Client did not advertize support for.<a href="#section-2.1-4" class="pilcrow">¶</a></p>
+<p id="section-2.1-5">EDNOTE: Is there any reason for the client to include "remote-attestation" identifiers in the newOrder at all?<a href="#section-2.1-5" class="pilcrow">¶</a></p>
 </section>
 </div>
 <div id="rats-chall">
@@ -1365,10 +1362,14 @@ The <code>value</code> MAY be left empty, or contain a property hint as per <a h
         <h3 id="name-remote-attest-01-challenge">
 <a href="#section-2.2" class="section-number selfRef">2.2. </a><a href="#name-remote-attest-01-challenge" class="section-name selfRef">remote-attest-01 Challenge</a>
         </h3>
-<p id="section-2.2-1">A <code>remote-attest-01</code> challenge type asks the Client to prove provide remote attestation. The Client SHOULD use the provided
+<p id="section-2.2-1">A <code>remote-attest-01</code> challenge type asks the Client to provide Evidence appropriate for making a  trustworthiness decision.
+The Client SHOULD use the provided
 <code>freshness_nonce</code> as an attestation freshness nonce, if the Client's underlying attestation technology supports freshness nonces.<a href="#section-2.2-1" class="pilcrow">¶</a></p>
-<p id="section-2.2-2">The Server MAY include a <code>attestClaimsHint</code> containing a list of claims that it would like to see in the<a href="#section-2.2-2" class="pilcrow">¶</a></p>
-<p id="section-2.2-3">This section describes the challenge/response extensions and procedures to use them.<a href="#section-2.2-3" class="pilcrow">¶</a></p>
+<p id="section-2.2-2">The Server MAY include a <code>attestClaimsHint</code> containing a list of claims or specific properties that it would like to see attested.<a href="#section-2.2-2" class="pilcrow">¶</a></p>
+<p id="section-2.2-3">The Client MUST complete the challenge by returning a CMW <span>[<a href="#I-D.ietf-rats-msg-wrap" class="cite xref">I-D.ietf-rats-msg-wrap</a>]</span> which MAY contain remote attestation data in any defined CMW format, including: EAT <span>[<a href="#RFC9711" class="cite xref">RFC9711</a>]</span>, WebAuthn (cite), TPM attest_certify (?cite), PKIXKeyAttesation <span>[<a href="#RATSKA" class="cite xref">RATSKA</a>]</span>.
+It may contain other RATS conceptual message types such as evidence, endorsement, or attestation result as appropriate for the mode.
+Since this specification allows wide flexibility on the contents of the remote attestation data, this document does not remove the need for vendors to perform interoperability testing with CAs to ensure compatibility.<a href="#section-2.2-3" class="pilcrow">¶</a></p>
+<p id="section-2.2-4">This section describes the challenge/response extensions and procedures to use them.<a href="#section-2.2-4" class="pilcrow">¶</a></p>
 <div id="remote-attest-01-challenge-object">
 <section id="section-2.2.1">
           <h4 id="name-remote-attest-01-challenge-">
@@ -1379,24 +1380,29 @@ The <code>value</code> MAY be left empty, or contain a property hint as per <a h
 <span class="break"></span><dl class="dlParallel" id="section-2.2.1-3">
             <dt id="section-2.2.1-3.1">freshness_nonce (required, string):</dt>
             <dd style="margin-left: 1.5em" id="section-2.2.1-3.2">
-              <p id="section-2.2.1-3.2.1">A randomly created nonce provided by the server which MUST be included in the Attestation Results to provide freshness.
-EDNOTE TODO: we should decide whether this nonce MAY / SHOULD / SHOULD NOT / MUST NOT be the same as the ACME nonce or the ACME Challenge URL.<a href="#section-2.2.1-3.2.1" class="pilcrow">¶</a></p>
-</dd>
-            <dd class="break"></dd>
-<dt id="section-2.2.1-3.3">attestClaimsHint (optional, list of string)</dt>
-            <dd style="margin-left: 1.5em" id="section-2.2.1-3.4">
-              <p id="section-2.2.1-3.4.1">If the Server requires attestation of specific claims or properties in order to issue the requested certificate profile, then it MAY list one or more types of claims from the newly-defined ACME Attest Claims Hints registry defined in <a href="#prophints" class="auto internal xref">Section 4</a>.<a href="#section-2.2.1-3.4.1" class="pilcrow">¶</a></p>
-</dd>
-            <dd class="break"></dd>
-<dt id="section-2.2.1-3.5">verifierEncryptionCredential (optional, string url)</dt>
-            <dd style="margin-left: 1.5em" id="section-2.2.1-3.6">
-              <p id="section-2.2.1-3.6.1">A URL where the Client can fetch the encryption public key that it can use for encrypting the rats challenge response.<a href="#section-2.2.1-3.6.1" class="pilcrow">¶</a></p>
+              <p id="section-2.2.1-3.2.1">A randomly created nonce provided by the server which MUST be included in the Attestation Results to provide freshness.<a href="#section-2.2.1-3.2.1" class="pilcrow">¶</a></p>
 </dd>
           <dd class="break"></dd>
 </dl>
-<p id="section-2.2.1-4">The <code>attestClaimsHint</code> SHOULD contain values from the "JSON Web Token Claims" registry created by <span>[<a href="#RFC7519" class="cite xref">RFC7519</a>]</span>, in particular claims related to remote attestation as registered in <span>[<a href="#RFC9711" class="cite xref">RFC9711</a>]</span> and related documents, but MAY contain non-registered values. The Client SHOULD attempt to collect evidence, endorsements, or attestation results from its local environment that satisfies these claims, either directly if the local environment supports EAT <span>[<a href="#RFC7519" class="cite xref">RFC7519</a>]</span>, or mapped to the closest equivalent claims in the supported format. The Client MAY ignore any claims that it does not recognize or that it is unable to collect remote attestation for. In other words, the Client SHOULD return what it has rather than failing, and allow the Server to decide if it is acceptable for the requested certificate profile.<a href="#section-2.2.1-4" class="pilcrow">¶</a></p>
-<p id="section-2.2.1-5">The <code>verifierEncryptionCredential</code> is for cases where the evidence contains sensitive data, such as identifiers that could be linkable to a person and therefore qualify as Personally Identifiable Information and the Client wishes to protect it against accidental logging, for example by HTTP proxies, as it passes through the Server's application stack. The design of passing a URL to the encryption public key as part of the <code>remote-attest-01</code> challenge object allows the Server to manage multiple verifierEncryptionCredentials, and choose the one appropriate to this certificate request flow. The <code>verifierEncryptionCredential</code> URL SHOULD be a semi-static UUID-style URL so that the Client can create a cache of previously-fetched encryption credentials, indexed by the path component of the <code>verifierEncryptionCredential</code> URL. The Server MAY, for example, use the public key fingerprint as the path component in the <code>verifierEncryptionCredential</code> URL. The referenced credential SHOULD be in the JSON Web Key (JWK) <span>[<a href="#RFC7517" class="cite xref">RFC7517</a>]</span> format, but MAY be in other reasonable formats such as a DER or PEM encoded X.509 certificate.<a href="#section-2.2.1-5" class="pilcrow">¶</a></p>
-<p id="section-2.2.1-6">EDNOTE: in the name of simplicity, make this "MUST JWK"?<a href="#section-2.2.1-6" class="pilcrow">¶</a></p>
+<p id="section-2.2.1-4">EDNOTE TODO: we should decide whether this nonce MAY / SHOULD / SHOULD NOT / MUST NOT be the same as the ACME nonce or the ACME Challenge URL.<a href="#section-2.2.1-4" class="pilcrow">¶</a></p>
+<span class="break"></span><dl class="dlParallel" id="section-2.2.1-5">
+            <dt id="section-2.2.1-5.1">attestClaimsHint (optional, list of string)</dt>
+            <dd style="margin-left: 1.5em" id="section-2.2.1-5.2">
+              <p id="section-2.2.1-5.2.1">If the Server requires attestation of specific claims or properties in order to issue the requested certificate profile, then it MAY list one or more types of claims from the newly-defined ACME Attest Claims Hints registry defined in <a href="#prophints" class="auto internal xref">Section 4</a>.<a href="#section-2.2.1-5.2.1" class="pilcrow">¶</a></p>
+</dd>
+            <dd class="break"></dd>
+<dt id="section-2.2.1-5.3">verifierEncryptionCredential (optional, JWK)</dt>
+            <dd style="margin-left: 1.5em" id="section-2.2.1-5.4">
+              <p id="section-2.2.1-5.4.1">A URL where the Client can fetch the encryption public key that it can use for encrypting the remote-attestation challenge response.<a href="#section-2.2.1-5.4.1" class="pilcrow">¶</a></p>
+</dd>
+          <dd class="break"></dd>
+</dl>
+<p id="section-2.2.1-6">The <code>attestClaimsHint</code> SHOULD contain values from the "JSON Web Token Claims" registry created by <span>[<a href="#RFC7519" class="cite xref">RFC7519</a>]</span>, in particular claims related to remote attestation as registered in <span>[<a href="#RFC9711" class="cite xref">RFC9711</a>]</span> and related documents, but MAY contain non-registered values. The Client SHOULD attempt to collect evidence, endorsements, or attestation results from its local environment that satisfies these claims, either directly if the local environment supports EAT <span>[<a href="#RFC7519" class="cite xref">RFC7519</a>]</span>, or mapped to the closest equivalent claims in the supported format. The Client MAY ignore any claims that it does not recognize or that it is unable to collect remote attestation for. In other words, the Client SHOULD return what it has rather than failing, and allow the Server to decide if it is acceptable for the requested certificate profile.<a href="#section-2.2.1-6" class="pilcrow">¶</a></p>
+<p id="section-2.2.1-7">The <code>verifierEncryptionCredential</code> is an encryption key in JSON Web Key (JWK) {!RFC7517} format that the Client can use to encrypt the attestation data that it will return.
+It is intended for cases where the evidence contains sensitive data the Client wishes to protect it against accidental logging, for example by HTTP proxies, as it passes through the Server's application stack. This could for example include data such as identifiers that could be linkable to a person and therefore qualify as Personally Identifiable Information, or any other detailed type of system measurement that the Client deems sensitive.
+The credential SHOULD be in the JSON Web Key (JWK) <span>[<a href="#RFC7517" class="cite xref">RFC7517</a>]</span> format, but MAY be in other reasonable formats such as a DER or PEM encoded X.509 certificate.<a href="#section-2.2.1-7" class="pilcrow">¶</a></p>
+<p id="section-2.2.1-8">EDNOTE: in the name of simplicity, make this "MUST JWK"?<a href="#section-2.2.1-8" class="pilcrow">¶</a></p>
+<p id="section-2.2.1-9">EDNOTE: We need to think carefully about whether this step needs to behave differently depending on whether the client will provide Evidence vs Attestation Result; particularly the nonces work a bit differently in the two cases. ... is it enough for the Server to always provide a nonce and just ignore it if the thing it gets back is an AR? Or maybe go even more hands-off and say "Here's a nonce field, whether and how you use it is up to the RA and its attestation Verifier" ?<a href="#section-2.2.1-9" class="pilcrow">¶</a></p>
 </section>
 </div>
 <div id="attestation-response">
@@ -1422,10 +1428,10 @@ EDNOTE TODO: we should decide whether this nonce MAY / SHOULD / SHOULD NOT / MUS
         <h3 id="name-step-1-neworder-request-obj">
 <a href="#section-3.1" class="section-number selfRef">3.1. </a><a href="#name-step-1-neworder-request-obj" class="section-name selfRef">Step 1: newOrder Request Object</a>
         </h3>
-<p id="section-3.1-1">During the certificate order creation step, the Client sends a /newOrder JWS request (Section 7.4 of <span>[<a href="#RFC8555" class="cite xref">RFC8555</a>]</span>) whose payload contains an array of identifiers. To indicate support for remote attestation, the client adds one or more <code>rats</code> identifiers to the array of identifiers. This is entirely optional and the server MAY choose to challenge for attestation or not according to its configuration for the requested certificate profile irrespective of whether the client indicated that it is attestation-capable.<a href="#section-3.1-1" class="pilcrow">¶</a></p>
-<p id="section-3.1-2">The "rats" identifier MAY appear as the only identifier type in the array, but only if the supported remote attestation type is capable of proving control of the identifier(s) that will go into the certificate's CN or SANs. For example, a secure-boot style remote attestation MAY be capable of proving ownership of a hardware serial number, or a WebAuthn / FIDO / Passkey style remote attestation MAY be capable of proving control of a FIDO token belonging to a given username or email address.
-However, more typically the "rats" identifier serves to provide supplemental trustworthiness next to a direct proof-of-control identity challenge such as DNS-01 or HTTP-01.<a href="#section-3.1-2" class="pilcrow">¶</a></p>
-<p id="section-3.1-3">In this example, a client is requesting a certificate for a <code>dns</code> identity <code>client01.finance.example</code> and offers that it can provide remote attestation of the secure-boot stack of the application server via the RATS identifier <code>"secure-boot"</code>, as well as provide remote attestation from the underlying cryptographic hardware holding the private key via the RATS identifier <code>"hsm"</code>. These values refer to the ACME Attest Properties Hint Registry defined in <a href="#prophints" class="auto internal xref">Section 4</a>.<a href="#section-3.1-3" class="pilcrow">¶</a></p>
+<p id="section-3.1-1">During the certificate order creation step, the Client sends a /newOrder JWS request (Section 7.4 of <span>[<a href="#RFC8555" class="cite xref">RFC8555</a>]</span>) whose payload contains an array of identifiers. To indicate support for remote attestation, the client adds one or more <code>remote-attestation</code> identifiers to the array of identifiers. This is entirely optional and the server MAY choose to challenge for attestation or not according to its configuration for the requested certificate profile irrespective of whether the client indicated that it is attestation-capable.<a href="#section-3.1-1" class="pilcrow">¶</a></p>
+<p id="section-3.1-2">The "remote-attestation" identifier MAY appear as the only identifier type in the array, but only if the supported remote attestation type is capable of proving control of the identifier(s) that will go into the certificate's CN or SANs. For example, a measured-boot style remote attestation MAY be capable of proving ownership of a hardware serial number, or a WebAuthn / FIDO / Passkey style remote attestation MAY be capable of proving control of a FIDO token belonging to a given username or email address.
+However, more typically the "remote-attestation" identifier serves to provide supplemental trustworthiness next to a direct proof-of-control identity challenge such as DNS-01 or HTTP-01.<a href="#section-3.1-2" class="pilcrow">¶</a></p>
+<p id="section-3.1-3">In this example, a client is requesting a certificate for a <code>dns</code> identity <code>client01.finance.example</code> and offers that it can provide remote attestation of the measured-boot stack of the application server via the remote-attestation identifier <code>"measured-boot"</code>, as well as provide remote attestation from the underlying cryptographic hardware holding the private key via the remote-attestation identifier <code>"hsm"</code>. These values refer to the ACME Attest Properties Hint Registry defined in <a href="#prophints" class="auto internal xref">Section 4</a>.<a href="#section-3.1-3" class="pilcrow">¶</a></p>
 <p id="section-3.1-4">An example extended newOrder JWS request:<a href="#section-3.1-4" class="pilcrow">¶</a></p>
 <div class="alignLeft art-text artwork" id="section-3.1-5">
 <pre>
@@ -1438,8 +1444,8 @@ However, more typically the "rats" identifier serves to provide supplemental tru
     "payload": base64url({
       "identifiers": [
         { "type": "dns", "value": "client01.finance.example" },
-        { "type": "rats", "value": "secure-boot" },
-        { "type": "rats", "value": "hsm" },
+        { "type": "remote-attestation", "value": "measured-boot" },
+        { "type": "remote-attestation", "value": "hsm" },
       ],
     }),
     "signature": "H6ZXtGjTZyUnPeKn...wEA4TklBdh3e454g"
@@ -1454,7 +1460,7 @@ However, more typically the "rats" identifier serves to provide supplemental tru
 <a href="#section-3.2" class="section-number selfRef">3.2. </a><a href="#name-step-2-order-object" class="section-name selfRef">Step 2: Order Object</a>
         </h3>
 <p id="section-3.2-1">As explained in <span>[<a href="#RFC8555" class="cite xref">RFC8555</a>], <a href="https://rfc-editor.org/rfc/rfc8555#section-7.1.3" class="relref">Section 7.1.3</a></span>, the server returns an Order Object.<a href="#section-3.2-1" class="pilcrow">¶</a></p>
-<p id="section-3.2-2">An example extended Order Object that includes RATS challenges is:<a href="#section-3.2-2" class="pilcrow">¶</a></p>
+<p id="section-3.2-2">An example extended Order Object that includes confirmation that this order will include remote attestation:<a href="#section-3.2-2" class="pilcrow">¶</a></p>
 <div class="alignLeft art-text artwork" id="section-3.2-3">
 <pre>
   POST /acme/new-order HTTP/1.1
@@ -1467,8 +1473,8 @@ However, more typically the "rats" identifier serves to provide supplemental tru
 
     "identifiers": [
         { "type": "dns", "value": "client01.finance.example" },
-        { "type": "rats", "value": "secure-boot" },
-        { "type": "rats", "value": "hsm" },
+        { "type": "remote-attestation", "value": "measured-boot" },
+        { "type": "remote-attestation", "value": "hsm" },
     ],
 
     "authorizations": [
@@ -1481,10 +1487,7 @@ However, more typically the "rats" identifier serves to provide supplemental tru
   }
 </pre><a href="#section-3.2-3" class="pilcrow">¶</a>
 </div>
-<p id="section-3.2-4">Note that the URLs listed in the <code>authorizations</code> array are arbitrary URLs created by the ACME server.
-The last component is a randomly created string created by the server.
-For simplicity, the first URL is identical to the example given in <span>[<a href="#RFC8555" class="cite xref">RFC8555</a>]</span>.<a href="#section-3.2-4" class="pilcrow">¶</a></p>
-<p id="section-3.2-5">The server is not required to match the list of RATS identifiers provided by the client. The server MAY challenge for a subset of the RATS identifiers offered by the client, or it MAY challenge for RATS identifiers that were not offered by the client. The server has full discretion for deciding what properties are required to be attested for the requested certificate profile.<a href="#section-3.2-5" class="pilcrow">¶</a></p>
+<p id="section-3.2-4">The server is not required to match the list of remote-attestation identifiers provided by the client. The server MAY challenge for a subset of the remote-attestation identifiers offered by the client, or it MAY challenge for remote-attestation identifiers that were not offered by the client. The server has full discretion for deciding what properties are required to be attested for the requested certificate profile.<a href="#section-3.2-4" class="pilcrow">¶</a></p>
 </section>
 </div>
 <div id="step-3-authorization-object">
@@ -1493,11 +1496,11 @@ For simplicity, the first URL is identical to the example given in <span>[<a hre
 <a href="#section-3.3" class="section-number selfRef">3.3. </a><a href="#name-step-3-authorization-object" class="section-name selfRef">Step 3: Authorization Object</a>
         </h3>
 <p id="section-3.3-1">The Client MUST complete the authorizations provided by the server, but it MAY do so in any order <span>[<a href="#RFC8555" class="cite xref">RFC8555</a>]</span>.<a href="#section-3.3-1" class="pilcrow">¶</a></p>
-<p id="section-3.3-2">In this example, the Server has created an Authorization Object for the "rats" and "dns" identifiers.
+<p id="section-3.3-2">In this example, the Server has created an Authorization Object for the "remote-attestation" and "dns" identifiers.
 The client accesses each authorization object from the URLs given in the Order Object.
 In this example, the <code>PAniVnsZcis</code> authorization relates to the <code>dns</code> identifier, and
 it is not changed from <span>[<a href="#RFC8555" class="cite xref">RFC8555</a>], <a href="https://rfc-editor.org/rfc/rfc8555#section-8" class="relref">Section 8</a></span>.
-The <code>C1uq5Dr+x8GSEJTSKW5B</code> authorization corresponds to the RATS "secure-boot" identifier.<a href="#section-3.3-2" class="pilcrow">¶</a></p>
+The <code>C1uq5Dr+x8GSEJTSKW5B</code> authorization corresponds to the remote-attestation "measured-boot" identifier.<a href="#section-3.3-2" class="pilcrow">¶</a></p>
 <p id="section-3.3-3">Here is an example <code>remote-attest-01</code> challenge:<a href="#section-3.3-3" class="pilcrow">¶</a></p>
 <div class="alignLeft art-text artwork" id="section-3.3-4">
 <pre>
@@ -1511,8 +1514,8 @@ The <code>C1uq5Dr+x8GSEJTSKW5B</code> authorization corresponds to the RATS "sec
      "expires": "2025-09-30T14:09:07.99Z",
 
      "identifier": {
-       "type": "rats",
-       "value": "secure-boot"
+       "type": "remote-attestation",
+       "value": "measured-boot"
      },
 
      "challenges": [
@@ -1522,32 +1525,33 @@ The <code>C1uq5Dr+x8GSEJTSKW5B</code> authorization corresponds to the RATS "sec
          "status": "pending",
          "freshness_nonce": "yoW1RL2zPBzYEHBQ06Jy",
          "attestClaimsHint": ["hwmodel", "swversion", "submods", "manifests",],
-         "verifierEncryptionCredential": "https://example.com/acme/rats-encr-keys/_fyg_W85yTul8zDPygcIgKmj-xA",
+         "verifierEncryptionCredential": "https://example.com/acme/ra-encr-keys/_fyg_W85yTul8zDPygcIgKmj-xA",
        }
      ],
    }
 </pre><a href="#section-3.3-4" class="pilcrow">¶</a>
 </div>
-<p id="section-3.3-5">In this example, the Server is indicating that it wants secure-boot type remote attestation including the following claims:<a href="#section-3.3-5" class="pilcrow">¶</a></p>
-<div class="alignLeft art-text artwork" id="section-3.3-6">
+<p id="section-3.3-5">EDNOTE: TODO: check 8555 if "token" is mandatory, and if so, use that to carry the attestation freshness nonce.<a href="#section-3.3-5" class="pilcrow">¶</a></p>
+<p id="section-3.3-6">In this example, the Server is indicating that it wants a remote attestation result including the following claims:<a href="#section-3.3-6" class="pilcrow">¶</a></p>
+<div class="alignLeft art-text artwork" id="section-3.3-7">
 <pre>
 "attestClaimsHint": ["hwmodel", "swversion", "submods", "manifests",],
-</pre><a href="#section-3.3-6" class="pilcrow">¶</a>
+</pre><a href="#section-3.3-7" class="pilcrow">¶</a>
 </div>
-<p id="section-3.3-7">meaning that it is interesting in the type of device and what software is running on it. This field is called a "hint" because the ACME Client might not be capable of obtaining remote attestation evidence, endorsements, or attestation results that directly map to these claims. Servers SHOULD NOT we written to expect exactly these claims back. This mechanism does not remove the need for vendors to perform interop testing against CAs.<a href="#section-3.3-7" class="pilcrow">¶</a></p>
-<p id="section-3.3-8">EDNOTE: is the attestClaimsHint actually adding anything useful on top of the identifier values of "secure-boot", "hsm", "passkey", etc?<a href="#section-3.3-8" class="pilcrow">¶</a></p>
+<p id="section-3.3-8">meaning that it is interesting in the type of device and what software is running on it. This field is called a "hint" because the ACME Client might not be capable of obtaining remote attestation evidence, endorsements, or attestation results that directly map to these claims. Servers SHOULD NOT we written to expect exactly these claims back. This mechanism does not remove the need for vendors to perform interop testing against CAs.<a href="#section-3.3-8" class="pilcrow">¶</a></p>
+<p id="section-3.3-9">EDNOTE: is the attestClaimsHint actually adding anything useful on top of the identifier values of "measured-boot", "hsm", "passkey", etc?<a href="#section-3.3-9" class="pilcrow">¶</a></p>
 </section>
 </div>
-<div id="step-4-respond-to-rats-challenge">
+<div id="step-4-respond-to-remote-attestation-challenge">
 <section id="section-3.4">
-        <h3 id="name-step-4-respond-to-rats-chal">
-<a href="#section-3.4" class="section-number selfRef">3.4. </a><a href="#name-step-4-respond-to-rats-chal" class="section-name selfRef">Step 4: Respond to RATS Challenge</a>
+        <h3 id="name-step-4-respond-to-remote-at">
+<a href="#section-3.4" class="section-number selfRef">3.4. </a><a href="#name-step-4-respond-to-remote-at" class="section-name selfRef">Step 4: Respond to Remote Attestation Challenge</a>
         </h3>
-<p id="section-3.4-1">The client now queries its local environment to obtain evidence, endorsements and/or attestation results to satisfy the RATS challenge.<a href="#section-3.4-1" class="pilcrow">¶</a></p>
+<p id="section-3.4-1">The client now queries its local environment to obtain evidence, endorsements and/or attestation results to satisfy the Remote Attestation challenge.<a href="#section-3.4-1" class="pilcrow">¶</a></p>
 <p id="section-3.4-2">If the underlying remote attestation technology supports a freshness nonce, then the Client passes the (example) token <code>yoW1RL2zPBzYEHBQ06Jy</code> into the underlying attestation service as the nonce.<a href="#section-3.4-2" class="pilcrow">¶</a></p>
-<p id="section-3.4-3">The payload of the RATS Challenge response MUST be a CMW <span>[<a href="#I-D.ietf-rats-msg-wrap" class="cite xref">I-D.ietf-rats-msg-wrap</a>]</span>, but the underlying payload type within the CMW is left unconstrained and therefore the details of collecting the remote attestation data for this this step are not in scope for this document.
+<p id="section-3.4-3">The payload of the Remote Attestation Challenge response MUST be a CMW <span>[<a href="#I-D.ietf-rats-msg-wrap" class="cite xref">I-D.ietf-rats-msg-wrap</a>]</span>, but the underlying payload type within the CMW is left unconstrained and therefore the details of collecting the remote attestation data for this this step are not in scope for this document.
 As an example, it might use EAT <span>[<a href="#RFC9711" class="cite xref">RFC9711</a>]</span>, TPM-CHARRA <span>[<a href="#RFC9684" class="cite xref">RFC9684</a>]</span>, or X, or Y (XXX: insert more options)<a href="#section-3.4-3" class="pilcrow">¶</a></p>
-<p id="section-3.4-4">Assume the following binary blob is RATS evidence collected by the Client:<a href="#section-3.4-4" class="pilcrow">¶</a></p>
+<p id="section-3.4-4">Assume the following binary blob is Remote Attestation evidence collected by the Client:<a href="#section-3.4-4" class="pilcrow">¶</a></p>
 <div class="alignLeft art-text artwork" id="section-3.4-5">
 <pre>
 yePAuQj5xXAnz87/7ItOkDTk5Y4syoW1RL2zPBzYEHBQ06JyUvZDYPYjeTqwlPszb9Grbxw0UAEFx5DxObV1
@@ -1585,7 +1589,7 @@ yePAuQj5xXAnz87/7ItOkDTk5Y4syoW1RL2zPBzYEHBQ06JyUvZDYPYjeTqwlPszb9Grbxw0UAEFx5Dx
         <h3 id="name-step-5-perform-other-challe">
 <a href="#section-3.5" class="section-number selfRef">3.5. </a><a href="#name-step-5-perform-other-challe" class="section-name selfRef">Step 5: Perform other challenges</a>
         </h3>
-<p id="section-3.5-1">The client SHOULD now perform any other RATS or non-RATS challenges that were listed in the Order Object from step 2.
+<p id="section-3.5-1">The client SHOULD now perform any other Remote Attestation or non-Remote Attestation challenges that were listed in the Order Object from step 2.
 ACME provides no ordering constraint on the challenges, so the Client MAY process them in any order, including concurrently.<a href="#section-3.5-1" class="pilcrow">¶</a></p>
 </section>
 </div>
@@ -1606,7 +1610,7 @@ If all is well, it will result in a certificate being issued.<a href="#section-3
       <h2 id="name-acme-attest-properties-hint">
 <a href="#section-4" class="section-number selfRef">4. </a><a href="#name-acme-attest-properties-hint" class="section-name selfRef">ACME Attest Properties Hint Registry</a>
       </h2>
-<p id="section-4-1">In order for the client to communicate in the newOrder request what types of attestation it is capable of producing, and for the server to indicate in the newOrder response what properties it requires attestation of, this specification creates a new IANA registry called "ACME Attest Properties Hint Registry. The hint is used as the value of the "rats" identifier type, as described in {#new-order-req} and {#new-order-resp}. In order to preserve vendor flexibility, the initial values in the ACME Attest Properties Hint Registry are intended to be generic in nature, and decoupled from the RATS conceptual message type (evidence, endorsement, or attestation result) or attestation data format (EAT (cite), WebAuthn (cite), TPM attest_certify (cite), PKIXKeyAttestation (cite), or device-proprietary). This model expects CAs to publish documentation about what specific data formats they support, and for vendors to perform interoperability testing with CAs to ensure compatibility. Ultimately, the CA's certificate policies will be the authority on what evidence or attestation results it will accept.<a href="#section-4-1" class="pilcrow">¶</a></p>
+<p id="section-4-1">In order for the client to communicate in the newOrder request what types of attestation it is capable of producing, and for the server to indicate in the newOrder response what properties it requires attestation of, this specification creates a new IANA registry called "ACME Attest Properties Hint Registry. The hint is used as the value of the "remote-attestation" identifier type, as described in {#new-order-req} and {#new-order-resp}. In order to preserve vendor flexibility, the initial values in the ACME Attest Properties Hint Registry are intended to be generic in nature, and decoupled from the RATS conceptual message type (evidence, endorsement, or attestation result) or attestation data format (EAT (cite), WebAuthn (cite), TPM attest_certify (cite), PKIXKeyAttestation (cite), or device-proprietary). This model expects CAs to publish documentation about what specific data formats they support, and for vendors to perform interoperability testing with CAs to ensure compatibility. Ultimately, the CA's certificate policies will be the authority on what evidence or attestation results it will accept.<a href="#section-4-1" class="pilcrow">¶</a></p>
 <p id="section-4-2">The ACME Attest Claims Hint Registry is intended to help clients to collect evidence or attestation results that are most likely to be acceptable to the server, but are not a guaranteed replacement for performing interoperability testing between a given attesting device and a given CA. Similarly, an ACME attestation hint may not map one-to-one with attestation functionality exposed by the underlying attesting device, so ACME clients might need to act as intermediaries mapping ACME hints to vendor-specific functionality on a per-hardware-vendor basis.<a href="#section-4-2" class="pilcrow">¶</a></p>
 <p id="section-4-3">See <a href="#iana-propshints" class="auto internal xref">Section 7.1</a> for the initial contents of this new registry.<a href="#section-4-3" class="pilcrow">¶</a></p>
 </section>
@@ -1638,14 +1642,14 @@ If all is well, it will result in a certificate being issued.<a href="#section-3
 <a href="#section-5.2" class="section-number selfRef">5.2. </a><a href="#name-enterprise-wifi-access" class="section-name selfRef">Enterprise WiFi Access</a>
         </h3>
 <p id="section-5.2-1">In enterprise access cases, security administrators wish to check the security status of an accessing end device before it connects to the internal network.
-Endpoint Detection and Response (EDR) softwares can check the security/trustworthiness statuses of the device and produce an Attestation Result (AR) if the check passes. ACME-RATS procedures can then be used to redeem a certificate using the AR.<a href="#section-5.2-1" class="pilcrow">¶</a></p>
+Endpoint Detection and Response (EDR) softwares can check the security/trustworthiness statuses of the device and produce an Attestation Result (AR) if the check passes. ACME-RA procedures can then be used to redeem a certificate using the AR.<a href="#section-5.2-1" class="pilcrow">¶</a></p>
 <p id="section-5.2-2">With that being said, a more specific use case is as follows: an enterprise employee visits multiple campuses, and connects to each one's WiFi. For example, an inspector visits many (tens of) power substations a day, connects to the local WiFi, download log data, proceed to the next and repeat the process.<a href="#section-5.2-2" class="pilcrow">¶</a></p>
 <p id="section-5.2-3">Current access solution include: 1. The inspector remembers the password for each WiFi, and conduct the 802.1X EAP password-based (PAP/CHAP/MS-CHAPv2) authentication. or 2. an enterprise MDM receives the passwords and usernames over application layer connection from the MDM server, and enter them on user's behalf. While Solution 1 obviously suffer from management burdens induced by massive number of password pairs, and password rotation requirements, the drawback of Solution 2 is more obsecure, which include:<a href="#section-5.2-3" class="pilcrow">¶</a></p>
 <p id="section-5.2-4">a. Bring Your Own Device (BYOD) situation and MDM is not available.
 b. Password could risk leakage due to APP compromise, or during Internet transmission. Anyone with leaked password can access, without binding of trusted/usual devices.
 c. The RADIUS Client/Access Point/Switch is not aware of the identity of the accessing device, therefore cannot enforce more fine-grained access policies.<a href="#section-5.2-4" class="pilcrow">¶</a></p>
 <p id="section-5.2-5">An ideal user story is:
-1. When the inspector is at base (or whenever the Remote Attestation-based check is available), he get his device inspected and redeem a certificate using ACME-RATS.
+1. When the inspector is at base (or whenever the Remote Attestation-based check is available), he get his device inspected and redeem a certificate using ACME-RA.
 2. When at substation, the inspector authenticate to the WiFi using EAP-TLS, where all the substations have the company root CA installed.
 2*. Alternatively, the Step 2 can use EAP-repeater mode, where the RADIUS Client redirects the request back to the RADIUS Server for more advanced checks.<a href="#section-5.2-5" class="pilcrow">¶</a></p>
 </section>
@@ -1708,7 +1712,7 @@ It does not result in any specific contents to the certificate Subject or Subjec
 <p id="section-7.1-3">The registry has the following columns:<a href="#section-7.1-3" class="pilcrow">¶</a></p>
 <ul class="normal">
 <li class="normal" id="section-7.1-4.1">
-            <p id="section-7.1-4.1.1">Property Hint: the string value to be placed within an ACME identifier of type "rats".<a href="#section-7.1-4.1.1" class="pilcrow">¶</a></p>
+            <p id="section-7.1-4.1.1">Property Hint: the string value to be placed within an ACME identifier of type "remote-attestation".<a href="#section-7.1-4.1.1" class="pilcrow">¶</a></p>
 </li>
           <li class="normal" id="section-7.1-4.2">
             <p id="section-7.1-4.2.1">Description: a description of the general property which the client is expected to attest.<a href="#section-7.1-4.2.1" class="pilcrow">¶</a></p>
@@ -1733,8 +1737,8 @@ It does not result in any specific contents to the certificate Subject or Subjec
               <td class="text-left" rowspan="1" colspan="1">Attestation that the private key associated with this certificate request is stored in cryptographic hardware such as a TPM or PKCS#11 HSM. In the case of PKCS#11 HSMs, the attestation SHOULD contain the PKCs#11 properties of the private key storage, as well as an indication of whether the cryptographic module is operating in FIPS mode.</td>
             </tr>
             <tr>
-              <td class="text-left" rowspan="1" colspan="1">"secure_boot"</td>
-              <td class="text-left" rowspan="1" colspan="1">Attestation from the device's onboard secure-boot stack of the device running the application.</td>
+              <td class="text-left" rowspan="1" colspan="1">"measured_boot"</td>
+              <td class="text-left" rowspan="1" colspan="1">Attestation from the device's onboard measured-boot stack of the device running the application.</td>
             </tr>
             <tr>
               <td class="text-left" rowspan="1" colspan="1">"os_patch_level"</td>
@@ -1751,9 +1755,8 @@ It does not result in any specific contents to the certificate Subject or Subjec
           </tbody>
         </table>
 <p id="section-7.1-7">In general, the target environment that the Server wants to be remotely attested is the environment where the application is running. The "hsm" property is an exception to this because this wants attestation from the cryptographic module instead.<a href="#section-7.1-7" class="pilcrow">¶</a></p>
-<p id="section-7.1-8">In cases where the ACME client is running on a different host from the application, remote attestation always refers to the application host. In other words, a centralized ACME client MUST fulfill the ACME rats challenge by getting the application server that will ultimately use the certificate to query its local environment for remote attestation, and the ACME client MUST NOT present remote attestation from the host where it is running.<a href="#section-7.1-8" class="pilcrow">¶</a></p>
-<p id="section-7.1-9">TODO: this is normative text that should move up to the body.<a href="#section-7.1-9" class="pilcrow">¶</a></p>
-<p id="section-7.1-10">EDNOTE: I am somewhat surprised that a registry like this does not already exist associated with CMW.<a href="#section-7.1-10" class="pilcrow">¶</a></p>
+<p id="section-7.1-8">In cases where the ACME client is running on a different host from the application, remote attestation always refers to the application host. In other words, a centralized ACME client MUST fulfill the ACME-RA challenge by getting the application server that will ultimately use the certificate to query its local environment for remote attestation, and the ACME client MUST NOT present remote attestation from the host where it is running.<a href="#section-7.1-8" class="pilcrow">¶</a></p>
+<p id="section-7.1-9">EDNOTE: I am somewhat surprised that a registry like this does not already exist associated with CMW.<a href="#section-7.1-9" class="pilcrow">¶</a></p>
 </section>
 </div>
 </section>
@@ -1783,7 +1786,7 @@ It does not result in any specific contents to the certificate Subject or Subjec
 <dd class="break"></dd>
 <dt id="I-D.ietf-rats-ar4si">[I-D.ietf-rats-ar4si]</dt>
         <dd>
-<span class="refAuthor">Voit, E.</span>, <span class="refAuthor">Birkholz, H.</span>, <span class="refAuthor">Hardjono, T.</span>, <span class="refAuthor">Fossati, T.</span>, and <span class="refAuthor">V. Scarlata</span>, <span class="refTitle">"Attestation Results for Secure Interactions"</span>, <span class="refContent">Work in Progress</span>, <span class="seriesInfo">Internet-Draft, draft-ietf-rats-ar4si-09</span>, <time datetime="2025-08-15" class="refDate">15 August 2025</time>, <span>&lt;<a href="https://datatracker.ietf.org/doc/html/draft-ietf-rats-ar4si-09">https://datatracker.ietf.org/doc/html/draft-ietf-rats-ar4si-09</a>&gt;</span>. </dd>
+<span class="refAuthor">Voit, E.</span>, <span class="refAuthor">Birkholz, H.</span>, <span class="refAuthor">Hardjono, T.</span>, <span class="refAuthor">Fossati, T.</span>, and <span class="refAuthor">V. Scarlata</span>, <span class="refTitle">"Attestation Results for Secure Interactions"</span>, <span class="refContent">Work in Progress</span>, <span class="seriesInfo">Internet-Draft, draft-ietf-rats-ar4si-10</span>, <time datetime="2026-05-18" class="refDate">18 May 2026</time>, <span>&lt;<a href="https://datatracker.ietf.org/doc/html/draft-ietf-rats-ar4si-10">https://datatracker.ietf.org/doc/html/draft-ietf-rats-ar4si-10</a>&gt;</span>. </dd>
 <dd class="break"></dd>
 <dt id="RFC7519">[RFC7519]</dt>
         <dd>
@@ -1812,15 +1815,15 @@ It does not result in any specific contents to the certificate Subject or Subjec
 <dl class="references">
 <dt id="CSRATT">[CSRATT]</dt>
         <dd>
-<span class="refAuthor">Ounsworth, M.</span>, <span class="refAuthor">Tschofenig, H.</span>, <span class="refAuthor">Birkholz, H.</span>, <span class="refAuthor">Wiseman, M.</span>, and <span class="refAuthor">N. Smith</span>, <span class="refTitle">"Use of Remote Attestation with Certification Signing Requests"</span>, <span class="refContent">Work in Progress</span>, <span class="seriesInfo">Internet-Draft, draft-ietf-lamps-csr-attestation-21</span>, <time datetime="2025-10-05" class="refDate">5 October 2025</time>, <span>&lt;<a href="https://datatracker.ietf.org/doc/html/draft-ietf-lamps-csr-attestation-21">https://datatracker.ietf.org/doc/html/draft-ietf-lamps-csr-attestation-21</a>&gt;</span>. </dd>
+<span class="refAuthor">Ounsworth, M.</span>, <span class="refAuthor">Tschofenig, H.</span>, <span class="refAuthor">Birkholz, H.</span>, <span class="refAuthor">Wiseman, M.</span>, and <span class="refAuthor">N. Smith</span>, <span class="refTitle">"Use of Remote Attestation with Certification Signing Requests"</span>, <span class="refContent">Work in Progress</span>, <span class="seriesInfo">Internet-Draft, draft-ietf-lamps-csr-attestation-29</span>, <time datetime="2026-09-02" class="refDate">2 September 2026</time>, <span>&lt;<a href="https://datatracker.ietf.org/doc/html/draft-ietf-lamps-csr-attestation-29">https://datatracker.ietf.org/doc/html/draft-ietf-lamps-csr-attestation-29</a>&gt;</span>. </dd>
 <dd class="break"></dd>
 <dt id="RATSPA">[RATSPA]</dt>
         <dd>
-<span class="refAuthor">Moriarty, K.</span>, <span class="refAuthor">Wiseman, M.</span>, <span class="refAuthor">Stein, A. J.</span>, and <span class="refAuthor">C. Nelogal</span>, <span class="refTitle">"Remote Posture Assessment for Systems, Containers, and Applications at Scale"</span>, <span class="refContent">Work in Progress</span>, <span class="seriesInfo">Internet-Draft, draft-ietf-rats-posture-assessment-03</span>, <time datetime="2025-07-07" class="refDate">7 July 2025</time>, <span>&lt;<a href="https://datatracker.ietf.org/doc/html/draft-ietf-rats-posture-assessment-03">https://datatracker.ietf.org/doc/html/draft-ietf-rats-posture-assessment-03</a>&gt;</span>. </dd>
+<span class="refAuthor">Moriarty, K.</span>, <span class="refAuthor">Wiseman, M.</span>, <span class="refAuthor">Stein, A. J.</span>, and <span class="refAuthor">C. Nelogal</span>, <span class="refTitle">"Remote Posture Assessment for Systems, Containers, and Applications at Scale"</span>, <span class="refContent">Work in Progress</span>, <span class="seriesInfo">Internet-Draft, draft-ietf-rats-posture-assessment-04</span>, <time datetime="2026-04-08" class="refDate">8 April 2026</time>, <span>&lt;<a href="https://datatracker.ietf.org/doc/html/draft-ietf-rats-posture-assessment-04">https://datatracker.ietf.org/doc/html/draft-ietf-rats-posture-assessment-04</a>&gt;</span>. </dd>
 <dd class="break"></dd>
 <dt id="RATSKA">[RATSKA]</dt>
         <dd>
-<span class="refAuthor">Ounsworth, M.</span>, <span class="refAuthor">Fiset, J.</span>, <span class="refAuthor">Tschofenig, H.</span>, <span class="refAuthor">Birkholz, H.</span>, <span class="refAuthor">Wiseman, M.</span>, and <span class="refAuthor">N. Smith</span>, <span class="refTitle">"PKIX Evidence for Remote Attestation of Hardware Security Modules"</span>, <span class="refContent">Work in Progress</span>, <span class="seriesInfo">Internet-Draft, draft-ietf-rats-pkix-key-attestation-02</span>, <time datetime="2025-10-10" class="refDate">10 October 2025</time>, <span>&lt;<a href="https://datatracker.ietf.org/doc/html/draft-ietf-rats-pkix-key-attestation-02">https://datatracker.ietf.org/doc/html/draft-ietf-rats-pkix-key-attestation-02</a>&gt;</span>. </dd>
+<span class="refAuthor">Fiset, J.</span>, <span class="refAuthor">Ounsworth, M.</span>, <span class="refAuthor">Tschofenig, H.</span>, <span class="refAuthor">Birkholz, H.</span>, <span class="refAuthor">Wiseman, M.</span>, and <span class="refAuthor">N. Smith</span>, <span class="refTitle">"Evidence Encoding for Hardware Security Modules"</span>, <span class="refContent">Work in Progress</span>, <span class="seriesInfo">Internet-Draft, draft-ietf-rats-pkix-key-attestation-07</span>, <time datetime="2026-07-05" class="refDate">5 July 2026</time>, <span>&lt;<a href="https://datatracker.ietf.org/doc/html/draft-ietf-rats-pkix-key-attestation-07">https://datatracker.ietf.org/doc/html/draft-ietf-rats-pkix-key-attestation-07</a>&gt;</span>. </dd>
 <dd class="break"></dd>
 <dt id="I-D.draft-bweeks-acme-device-attest-01">[I-D.draft-bweeks-acme-device-attest-01]</dt>
         <dd>
@@ -1866,6 +1869,7 @@ It does not result in any specific contents to the certificate Subject or Subjec
 </address>
 <address class="vcard">
         <div dir="auto" class="left"><span class="fn nameRole">Mike Ounsworth</span></div>
+<div dir="auto" class="left"><span class="org">Cryptic Forest Software, Ltd</span></div>
 <div class="email">
 <span>Email:</span>
 <a href="mailto:mike@ounsworth.ca" class="email">mike@ounsworth.ca</a>
