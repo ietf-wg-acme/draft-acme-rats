@@ -5,10 +5,12 @@
 Automated Certificate Management Environment                   C. P. Liu
 Internet-Draft                                                    Huawei
 Intended status: Standards Track                            M. Ounsworth
-Expires: 18 July 2026                       Cryptic Forest Software, Ltd
+Expires: 7 March 2027                       Cryptic Forest Software, Ltd
                                                            M. Richardson
                                             Sandelman Software Works Inc
-                                                         14 January 2026
+                                                              G. Mallaya
+                                                           AppViewX, Inc
+                                                        3 September 2026
 
 
  Automated Certificate Management Environment (ACME) Remote Attestation
@@ -59,7 +61,7 @@ Status of This Memo
    time.  It is inappropriate to use Internet-Drafts as reference
    material or to cite them other than as "work in progress."
 
-   This Internet-Draft will expire on 18 July 2026.
+   This Internet-Draft will expire on 7 March 2027.
 
 Copyright Notice
 
@@ -912,9 +914,8 @@ yePAuQj5xXAnz87/7ItOkDTk5Y4syoW1RL2zPBzYEHBQ06JyUvZDYPYjeTqwlPszb9Grbxw0UAEFx5Dx
               Voit, E., Birkholz, H., Hardjono, T., Fossati, T., and V.
               Scarlata, "Attestation Results for Secure Interactions",
               Work in Progress, Internet-Draft, draft-ietf-rats-ar4si-
-              09, 15 August 2025,
-              <https://datatracker.ietf.org/doc/html/draft-ietf-rats-
-              ar4si-09>.
+              10, 18 May 2026, <https://datatracker.ietf.org/doc/html/
+              draft-ietf-rats-ar4si-10>.
 
    [RFC7519]  Jones, M., Bradley, J., and N. Sakimura, "JSON Web Token
               (JWT)", RFC 7519, DOI 10.17487/RFC7519, May 2015,
@@ -938,24 +939,23 @@ yePAuQj5xXAnz87/7ItOkDTk5Y4syoW1RL2zPBzYEHBQ06JyUvZDYPYjeTqwlPszb9Grbxw0UAEFx5Dx
    [CSRATT]   Ounsworth, M., Tschofenig, H., Birkholz, H., Wiseman, M.,
               and N. Smith, "Use of Remote Attestation with
               Certification Signing Requests", Work in Progress,
-              Internet-Draft, draft-ietf-lamps-csr-attestation-21, 5
-              October 2025, <https://datatracker.ietf.org/doc/html/
-              draft-ietf-lamps-csr-attestation-21>.
+              Internet-Draft, draft-ietf-lamps-csr-attestation-29, 2
+              September 2026, <https://datatracker.ietf.org/doc/html/
+              draft-ietf-lamps-csr-attestation-29>.
 
    [RATSPA]   Moriarty, K., Wiseman, M., Stein, A. J., and C. Nelogal,
               "Remote Posture Assessment for Systems, Containers, and
               Applications at Scale", Work in Progress, Internet-Draft,
-              draft-ietf-rats-posture-assessment-03, 7 July 2025,
+              draft-ietf-rats-posture-assessment-04, 8 April 2026,
               <https://datatracker.ietf.org/doc/html/draft-ietf-rats-
-              posture-assessment-03>.
+              posture-assessment-04>.
 
-   [RATSKA]   Ounsworth, M., Fiset, J., Tschofenig, H., Birkholz, H.,
-              Wiseman, M., and N. Smith, "PKIX Evidence for Remote
-              Attestation of Hardware Security Modules", Work in
-              Progress, Internet-Draft, draft-ietf-rats-pkix-key-
-              attestation-02, 10 October 2025,
+   [RATSKA]   Fiset, J., Ounsworth, M., Tschofenig, H., Birkholz, H.,
+              Wiseman, M., and N. Smith, "Evidence Encoding for Hardware
+              Security Modules", Work in Progress, Internet-Draft,
+              draft-ietf-rats-pkix-key-attestation-07, 5 July 2026,
               <https://datatracker.ietf.org/doc/html/draft-ietf-rats-
-              pkix-key-attestation-02>.
+              pkix-key-attestation-07>.
 
    [I-D.draft-bweeks-acme-device-attest-01]
               Weeks, B., "Automated Certificate Management Environment
@@ -1001,3 +1001,8 @@ Authors' Addresses
    Michael Richardson
    Sandelman Software Works Inc
    Email: mcr+ietf@sandelman.ca
+
+
+   Ganesh Mallaya
+   AppViewX, Inc
+   Email: ganesh.mallaya@appviewx.om
